@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Dữ liệu gốc được giữ cục bộ, không đưa lên Git.
+/data/

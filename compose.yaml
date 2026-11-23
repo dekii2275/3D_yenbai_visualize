@@ -1,0 +1,6 @@
+services:
+  yenbai-map:
+    build: .
+    ports:
+      - "18087:8000"
+    restart: unless-stopped
