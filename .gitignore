@@ -224,3 +224,7 @@ __marimo__/
 
 # Dữ liệu gốc được giữ cục bộ, không đưa lên Git.
 /data/
+
+# Mô hình: dữ liệu trung gian và sổ theo dõi kế hoạch
+/model/work/
+/.superpowers/

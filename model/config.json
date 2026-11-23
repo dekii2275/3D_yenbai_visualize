@@ -1,0 +1,10 @@
+{
+  "ghi_chu": "Thử nghiệm – ngưỡng nháp, cần cơ quan chuyên môn xác nhận",
+  "nguong": {"mua_24h_mm": null, "mua_72h_mm": null},
+  "ma_tran": {
+    "R0": ["xanh", "xanh", "xanh", "xanh"],
+    "R1": ["xanh", "xanh", "vàng", "vàng"],
+    "R2": ["xanh", "vàng", "cam", "cam"],
+    "R3": ["vàng", "cam", "đỏ", "đỏ"]
+  }
+}
