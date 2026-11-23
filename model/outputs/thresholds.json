@@ -1,0 +1,35 @@
+{
+ "mua_24h_mm": [
+  80,
+  230,
+  410
+ ],
+ "mua_72h_mm": [
+  160,
+  460,
+  540
+ ],
+ "cach_tinh": "R1/R2/R3 = phân vị P99/P99.9/P99.99 của các giờ có số liệu (2021–2026), làm tròn xuống bội 10 mm; mức mưa = mức cao nhất của mưa 24h và 72h (so sánh ≥).",
+ "ghi_chu": "Thử nghiệm – ngưỡng nháp, cần cơ quan chuyên môn xác nhận",
+ "so_ngay_vuot": {
+  "mua_24h_mm": [
+   50,
+   4,
+   1
+  ],
+  "mua_72h_mm": [
+   25,
+   2,
+   1
+  ]
+ },
+ "yagi_dinh": {
+  "mua_24h": 417.6,
+  "mua_72h": 544.6
+ },
+ "so_gio_co_so_lieu": {
+  "mua_24h_mm": 41082,
+  "mua_72h_mm": 39655
+ },
+ "doi_chieu": "chưa đối chiếu – cấp độ rủi ro do lũ quét, sạt lở đất nằm ở Phụ lục XII (Bảng 5–6) của Quyết định 18/2021/QĐ-TTg (hiệu lực 01/7/2021, thay QĐ 44/2014); chưa xác minh được giá trị ngưỡng mưa. Nguồn: https://thuvienphapluat.vn/documents/law.aspx?id=E%3DRjeE56RTTk ; https://vupc.mae.gov.vn/Data/files/18_2021_QD-TTg.doc"
+}
