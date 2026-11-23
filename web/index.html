@@ -6,29 +6,44 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-<header class="topbar"><div class="brand-mark">YB<span>↗</span></div><div class="brand"><strong>YÊN BÁI</strong><small>LANDSLIDE OBSERVATORY</small></div><div class="top-separator"></div><div class="top-title">Bản đồ địa hình &amp; trượt lở</div><div class="top-right"><i></i> DỮ LIỆU HIỆN CÓ <span> / </span> PHƯỜNG YÊN BÁI</div></header>
-<main>
-  <aside class="sidebar">
-    <div class="eyebrow"><span>01</span> TỔNG QUAN KHU VỰC</div>
-    <h1>Địa hình<br><em>Yên Bái.</em></h1>
-    <p class="intro">Khám phá địa hình và các vị trí trượt lở được ghi nhận trong bộ dữ liệu của phường.</p>
+<header class="topbar">
+  <div class="top-row"><div class="brand-mark">YB<span>↗</span></div><div class="brand"><strong>YÊN BÁI</strong><small>LANDSLIDE OBSERVATORY</small></div><div class="top-separator"></div><div class="top-title">Bản đồ địa hình &amp; trượt lở</div>
     <div class="stats"><div><strong id="total">—</strong><span>VỊ TRÍ DỮ LIỆU</span></div><div><strong id="risk-total">—</strong><span>ĐIỂM NGUY CƠ</span></div><div><strong id="occurred-total">—</strong><span>ĐÃ XẢY RA</span></div></div>
-    <div class="section-head"><div><span class="section-number">02 / </span> BỘ LỌC</div><button id="reset-filter" class="text-button">Đặt lại ↗</button></div>
-    <label class="field-label" for="search">TÌM VỊ TRÍ</label><div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Tên điểm, địa danh, mã..."></div>
-    <label class="field-label" for="status">TRẠNG THÁI</label><select id="status"><option value="">Tất cả trạng thái</option><option value="Nguy cơ">Nguy cơ</option><option value="Đã xảy ra">Đã xảy ra</option></select>
-    <div class="section-head list-head"><div><span class="section-number">03 / </span> DANH SÁCH VỊ TRÍ</div><span id="visible-count" class="count">—</span></div>
-    <div id="point-list" class="point-list" aria-label="Danh sách vị trí trượt lở"></div>
-    <div class="sidebar-footer">DỮ LIỆU THAM KHẢO <span>•</span> KHÔNG PHẢI CẢNH BÁO TRỰC TIẾP</div>
-  </aside>
+    <div class="toolbar">
+    <div class="search-wrap"><span>⌕</span><input id="search" type="search" placeholder="Tìm vị trí: tên điểm, địa danh, mã..." aria-label="Tìm vị trí"></div>
+    <select id="status" aria-label="Trạng thái"><option value="">Tất cả trạng thái</option><option value="Nguy cơ">Nguy cơ</option><option value="Đã xảy ra">Đã xảy ra</option></select>
+    <button id="reset-filter" class="text-button">Đặt lại ↺</button>
+    <div class="list-dropdown"><button id="list-toggle" class="list-toggle" aria-expanded="false" aria-controls="list-panel">DANH SÁCH VỊ TRÍ <span id="visible-count" class="count">—</span> <b>▾</b></button>
+      <div id="list-panel" class="list-panel" hidden><div id="point-list" class="point-list" aria-label="Danh sách vị trí trượt lở"></div></div></div>
+    </div>
+  </div>
+</header>
+<main>
   <section class="map-area" aria-label="Bản đồ địa hình 3D">
-    <div class="map-heading"><div><div class="map-overline">KHÔNG GIAN ĐỊA HÌNH <span> / </span> 3D</div><h2>Phường Yên Bái</h2><p>Di chuyển để khám phá địa hình và chọn điểm trên bản đồ.</p></div><div class="map-chip"><span>●</span> ĐỊA HÌNH · OSM</div></div>
     <canvas id="terrain-gl" aria-hidden="true"></canvas>
     <canvas id="map" aria-label="Mô hình địa hình 3D và các điểm trượt lở">Trình duyệt của bạn không hỗ trợ canvas.</canvas>
+    <div id="mode-legend" class="mode-legend" hidden></div><div id="tip" class="tip" hidden></div><div class="kbd-hint">Cuộn để thu phóng · bấm cờ để xem chi tiết · phím + / − / 0</div>
     <div id="loading" class="loading">Đang tải dữ liệu địa hình...</div>
-    <div class="layer-controls" aria-label="Các lớp bản đồ"><div>LỚP BẢN ĐỒ</div><label><input type="checkbox" id="layer-imagery" checked> Ảnh vệ tinh</label><small id="imagery-status" role="status">Đang tải ảnh vệ tinh…</small><label><input type="checkbox" id="layer-roads"> Đường giao thông</label><label><input type="checkbox" id="layer-buildings"> Công trình</label><label><input type="checkbox" id="layer-water"> Sông, mặt nước</label><label><input type="checkbox" id="layer-points" checked> Điểm trượt lở</label></div>
-    <div class="map-controls"><span id="zoom-level" aria-label="Mức thu phóng">1.0×</span><button id="zoom-in" title="Phóng to" aria-label="Phóng to">+</button><button id="zoom-out" title="Thu nhỏ" aria-label="Thu nhỏ">−</button><button id="pan-mode" aria-pressed="false" title="Bật chế độ di chuyển" aria-label="Bật chế độ di chuyển">✥</button><button id="reset-view" title="Đặt lại góc nhìn" aria-label="Đặt lại góc nhìn">⌂</button></div>
-    <div class="map-bottom"><div class="legend"><span><i class="dot risk"></i> Nguy cơ</span><span><i class="dot occurred"></i> Đã xảy ra</span><span><i class="dot selected"></i> Đang chọn</span></div><div class="map-hint">KÉO XOAY <b>·</b> SHIFT + KÉO DI CHUYỂN <b>·</b> CUỘN THU PHÓNG</div></div>
-    <div class="scale-label">ĐỘ CAO ĐỊA HÌNH <span id="elevation-min">—</span><i></i><span id="elevation-max">—</span></div><div class="map-note">Ảnh: Esri, Vantor, Earthstar Geographics và cộng đồng GIS · Địa hình được phóng đại</div>
+    <div class="layer-controls" id="layer-panel" aria-label="Các lớp bản đồ">
+      <button class="panel-head" id="layer-toggle" aria-expanded="true">LỚP BẢN ĐỒ <b>▾</b></button>
+      <div class="panel-body">
+        <div class="group-label">NỀN</div>
+        <div class="seg" id="base-mode" role="radiogroup" aria-label="Nền bản đồ"><button data-mode="satellite" class="on" role="radio" aria-checked="true">Vệ tinh</button><button data-mode="elevation" role="radio" aria-checked="false">Độ cao</button><button data-mode="slope" role="radio" aria-checked="false">Độ dốc</button><button data-mode="geology" role="radio" aria-checked="false">Địa chất</button></div>
+        <small id="imagery-status" role="status">Đang tải ảnh vệ tinh…</small>
+        <div class="group-label">NGUY CƠ</div>
+        <label><input type="checkbox" id="layer-points" checked> Điểm trượt lở <em id="n-points">87</em></label>
+        <label><input type="checkbox" id="layer-yagi" checked> Vết trượt sau bão Yagi <em id="n-yagi">—</em></label>
+        <label><input type="checkbox" id="layer-faults"> Đứt gãy địa chất <em id="n-faults">—</em></label>
+        <div class="group-label">HIỆN TRẠNG</div>
+        <label><input type="checkbox" id="layer-buildings" checked> Nhà, công trình</label>
+        <label><input type="checkbox" id="layer-roads" checked> Đường bộ, đường sắt</label>
+        <label><input type="checkbox" id="layer-water" checked> Sông, mặt nước</label>
+        <label><input type="checkbox" id="layer-places" checked> Địa danh, cơ sở thiết yếu</label>
+      </div>
+    </div>
+    <div class="map-controls"><span id="zoom-level" aria-label="Mức thu phóng">1.0×</span><button id="zoom-in" title="Phóng to" aria-label="Phóng to">+</button><button id="zoom-out" title="Thu nhỏ" aria-label="Thu nhỏ">−</button><button id="reset-view" title="Đặt lại góc nhìn" aria-label="Đặt lại góc nhìn">⌂</button></div>
+    <div class="map-bottom"><div class="legend"><div class="legend-items" id="legend-items"><span><i class="flag" style="--c:#4cb87a"></i>Bình thường <b id="lv-binh_thuong">0</b></span><span><i class="flag" style="--c:#e9c53f"></i>Theo dõi <b id="lv-theo_doi">0</b></span><span><i class="flag" style="--c:#f0883a"></i>Cảnh báo <b id="lv-canh_bao">0</b></span><span><i class="flag" style="--c:#e2453a"></i>Nguy cơ cao <b id="lv-nguy_co_cao">0</b></span><span class="sep"></span><span><i class="ring"></i>Vùng 100 m</span><span><i class="house"></i>Nhà trong vùng</span><span id="lg-yagi"><i class="scar"></i>Vết trượt Yagi 9/2024</span><span id="lg-fault" hidden><i class="fault"></i>Đứt gãy</span><span id="lg-poi"><i class="poi" style="--c:#e2574c">+</i>Y tế <i class="poi" style="--c:#4b8fe0">T</i>Giáo dục <i class="poi" style="--c:#8a6ae0">★</i>Cơ quan</span></div></div></div>
+    <div class="scale-label" id="scale-label">ĐỘ CAO ĐỊA HÌNH <span id="elevation-min">—</span><i></i><span id="elevation-max">—</span></div><div class="map-note">Ảnh: Esri, Vantor, Earthstar Geographics và cộng đồng GIS · Địa hình được phóng đại</div>
   </section>
   <aside id="details" class="details" aria-live="polite"><div class="detail-top"><span>THÔNG TIN VỊ TRÍ</span><button id="close-details" aria-label="Đóng">×</button></div><div id="detail-content"></div></aside>
 </main>
