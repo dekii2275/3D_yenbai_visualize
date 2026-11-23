@@ -1,0 +1,102 @@
+{
+ "models": {
+  "logistic": {
+   "holdout_yen_bai": {
+    "auc_roc": 0.6674,
+    "auc_pr": 0.3529,
+    "n_pos": 557,
+    "n_neg": 1849
+   },
+   "block_cv": {
+    "auc_roc_mean": 0.6907,
+    "auc_roc_std": 0.0337,
+    "auc_pr_mean": 0.328
+   }
+  },
+  "random_forest": {
+   "holdout_yen_bai": {
+    "auc_roc": 0.7548,
+    "auc_pr": 0.4736,
+    "n_pos": 557,
+    "n_neg": 1849
+   },
+   "block_cv": {
+    "auc_roc_mean": 0.777,
+    "auc_roc_std": 0.0251,
+    "auc_pr_mean": 0.4648
+   }
+  }
+ },
+ "chosen": "random_forest",
+ "cutoffs": [
+  0.291,
+  0.4764,
+  0.6387
+ ],
+ "cutoff_rule": "Thấp < P60 ≤ Trung bình < P85 ≤ Cao < P95 ≤ Rất cao (xác suất trên ô hợp lệ)",
+ "importance": {
+  "do_doc": 0.2318,
+  "kc_nuoc_m": 0.0965,
+  "cao_do": 0.0949,
+  "bien_do_300m": 0.0896,
+  "kc_dut_gay_m": 0.0811,
+  "kc_duong_m": 0.0795,
+  "do_cong": 0.073,
+  "tpi_330m": 0.0722,
+  "cos_huong": 0.0597,
+  "sin_huong": 0.0591,
+  "mat_do_nha_150m": 0.0437,
+  "da_tram_tich_de_tu": 0.0093,
+  "da_bien_chat": 0.0085,
+  "da_khac": 0.0012,
+  "da_carbonat": 0.0
+ },
+ "features": [
+  "cao_do",
+  "do_doc",
+  "sin_huong",
+  "cos_huong",
+  "bien_do_300m",
+  "do_cong",
+  "tpi_330m",
+  "kc_duong_m",
+  "kc_nuoc_m",
+  "kc_dut_gay_m",
+  "mat_do_nha_150m",
+  "da_bien_chat",
+  "da_tram_tich_de_tu",
+  "da_carbonat",
+  "da_khac"
+ ],
+ "n_samples": {
+  "positive": 1127,
+  "negative": 4508
+ },
+ "area_share_by_class": {
+  "Thấp": 0.6,
+  "Trung bình": 0.25,
+  "Cao": 0.1,
+  "Rất cao": 0.05
+ },
+ "yen_bai_scar_cells_by_class": {
+  "Thấp": 0,
+  "Trung bình": 11,
+  "Cao": 102,
+  "Rất cao": 444
+ },
+ "yen_bai_scar_cells_by_class_holdout": {
+  "Thấp": 131,
+  "Trung bình": 198,
+  "Cao": 157,
+  "Rất cao": 71
+ },
+ "scar_class_note": "yen_bai_scar_cells_by_class dùng mô hình cuối (đã học cả Yên Bái – trong mẫu); bản _holdout dùng mô hình không học Yên Bái – đây là con số kiểm định.",
+ "flags_by_class": {
+  "Thấp": 18,
+  "Trung bình": 30,
+  "Cao": 20,
+  "Rất cao": 19,
+  "Không xác định": 0
+ },
+ "note": "87 điểm cờ không độc lập với vết Yagi (64/87 điểm cách vết < 100 m) – chỉ là kiểm tra phụ."
+}
