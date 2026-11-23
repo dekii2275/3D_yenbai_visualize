@@ -19,6 +19,7 @@ from model.paths import OUT, SRC, WORK
 from model.warning import CAP
 
 HOLDOUT = 'Yên Bái'
+SLOPE_DOMAIN = 5.0  # min mean slope of any Yagi scar polygon (detector filter)
 
 
 def spatial_blocks(x: np.ndarray, y: np.ndarray, size_m: float = 1000) -> np.ndarray:
@@ -44,16 +45,23 @@ def evaluate(model, df: pd.DataFrame) -> dict:
     X, y = df[FEATURES].values, df.nhan.values
     test = (df.phuong == HOLDOUT).values
     model.fit(X[~test], y[~test])
-    roc, pr = _scores(y[test], model.predict_proba(X[test])[:, 1])
+    p_test = model.predict_proba(X[test])[:, 1]
+    roc, pr = _scores(y[test], p_test)
     hold = {'auc_roc': round(roc, 4), 'auc_pr': round(pr, 4), 'n_pos': int(y[test].sum()),
             'n_neg': int((y[test] == 0).sum())}
+    # The scar detector never flags polygons with mean slope < 5°; scoring only inside that domain shows how
+    # much of the AUC is just "flat vs not flat".
+    steep = df.do_doc.values[test] >= SLOPE_DOMAIN
+    roc5, pr5 = _scores(y[test][steep], p_test[steep])
+    hold5 = {'auc_roc': round(roc5, 4), 'auc_pr': round(pr5, 4), 'n_pos': int(y[test][steep].sum()),
+             'n_neg': int((y[test][steep] == 0).sum())}
     rocs, prs = [], []
     for tr, te in GroupKFold(n_splits=5).split(X, y, spatial_blocks(df.x, df.y)):
         model.fit(X[tr], y[tr])
         r, p = _scores(y[te], model.predict_proba(X[te])[:, 1])
         rocs.append(r)
         prs.append(p)
-    return {'holdout_yen_bai': hold,
+    return {'holdout_yen_bai': hold, 'holdout_yen_bai_doc_ge5': hold5,
             'block_cv': {'auc_roc_mean': round(float(np.mean(rocs)), 4), 'auc_roc_std': round(float(np.std(rocs)), 4),
                          'auc_pr_mean': round(float(np.mean(prs)), 4)}}
 
@@ -155,7 +163,7 @@ def main() -> None:
     metrics['flags_by_class']['Không xác định'] = metrics['flags_by_class'].pop(None)
     (OUT / 'metrics.json').write_text(json.dumps(metrics, ensure_ascii=False, indent=1), encoding='utf-8')
     for name, r in results.items():
-        print(f"{name:14s} holdout Yên Bái AUC-ROC {r['holdout_yen_bai']['auc_roc']:.3f} AUC-PR "
+        print(f"{name:14s} holdout Yên Bái AUC-ROC {r['holdout_yen_bai']['auc_roc']:.3f} (dốc≥5°: {r['holdout_yen_bai_doc_ge5']['auc_roc']:.3f}) AUC-PR "
               f"{r['holdout_yen_bai']['auc_pr']:.3f} | block-CV AUC-ROC {r['block_cv']['auc_roc_mean']:.3f}"
               f"±{r['block_cv']['auc_roc_std']:.3f}")
     print('Chọn:', chosen, '| Vết Yên Bái theo cấp (holdout):', metrics['yen_bai_scar_cells_by_class_holdout'])

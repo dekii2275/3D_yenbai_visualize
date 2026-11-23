@@ -12,6 +12,7 @@ from model.warning import NOTE, load_config
 COLS = {'mua_24h': 'mua_24h_mm', 'mua_72h': 'mua_72h_mm'}
 PCTS = [99, 99.9, 99.99]
 YAGI = ('2024-09-06', '2024-09-14')
+ANCHOR_END = '2024-09-09 23:59'  # 593/904 Yagi scars are dated 09/09/2024
 
 # Filled in from a check of Decision 18/2021/QĐ-TTg; see doi_chieu in thresholds.json.
 DOI_CHIEU = ('chưa đối chiếu – cấp độ rủi ro do lũ quét, sạt lở đất nằm ở Phụ lục XII (Bảng 5–6) của '
@@ -25,21 +26,33 @@ def load_rain(src: Path = SRC) -> pd.DataFrame:
     return pd.DataFrame({'mua_24h': cum['1 ngày'], 'mua_72h': cum['3 ngày']})
 
 
+def _floor10(v: float) -> int:
+    return int(np.floor(v / 10) * 10)
+
+
 def draft_thresholds(rain: pd.DataFrame) -> dict:
     out = {}
     exceed = {}
     days = rain.index.floor('D')
+    before = rain.loc[YAGI[0]:ANCHOR_END]
     for col, key in COLS.items():
         v = rain[col].dropna().values
-        cuts = [int(np.floor(np.percentile(v, p) / 10) * 10) for p in PCTS]
+        cuts = [_floor10(np.percentile(v, p)) for p in PCTS]
+        # Anchor to Yagi: R3 must already be reached by the date most scars appeared (09/09/2024).
+        if len(before) and before[col].notna().any():
+            cuts[2] = min(cuts[2], _floor10(before[col].max()))
+            if cuts[1] >= cuts[2]:
+                cuts[1] = _floor10((cuts[0] + cuts[2]) / 2)
         out[key] = cuts
         exceed[key] = [int(days[(rain[col] >= c).values].nunique()) for c in cuts]
     yagi = rain.loc[YAGI[0]:YAGI[1]]
     out.update({
         'cach_tinh': 'R1/R2/R3 = phân vị P99/P99.9/P99.99 của các giờ có số liệu (2021–2026), làm tròn xuống bội 10 mm; '
-                     'mức mưa = mức cao nhất của mưa 24h và 72h (so sánh ≥).',
+                     'R3 neo với Yagi: không vượt lượng mưa đã đạt đến hết 09/09/2024 (ngày phát sinh của đa số vết trượt), '
+                     'nếu R2 ≥ R3 thì R2 = trung bình R1 và R3; mức mưa = mức cao nhất của mưa 24h và 72h (so sánh ≥).',
         'ghi_chu': NOTE,
         'so_ngay_vuot': exceed,
+        'yagi_den_09_09': {'mua_24h': round(float(before.mua_24h.max()), 1), 'mua_72h': round(float(before.mua_72h.max()), 1)} if len(before) else None,
         'yagi_dinh': {'mua_24h': round(float(yagi.mua_24h.max()), 1), 'mua_72h': round(float(yagi.mua_72h.max()), 1)},
         'so_gio_co_so_lieu': {k: int(rain[c].notna().sum()) for c, k in COLS.items()},
         'doi_chieu': DOI_CHIEU,

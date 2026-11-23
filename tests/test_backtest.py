@@ -48,3 +48,27 @@ def test_backtest_real():
     r = run_backtest(load_rain(SRC), flags, load_config())
     assert r['yagi']['Rất cao'] == 'đỏ'
     assert r['so_ngay_co_mau']['Rất cao']['đỏ'] <= 10
+
+
+def test_partial_hours_grey():
+    idx = _hours(4)
+    rain = pd.DataFrame({'mua_24h': [0.0, 0.0, np.nan, 170.0], 'mua_72h': [0.0, np.nan, 0.0, np.nan]}, index=idx)
+    from model.backtest import hourly_levels
+    lv = hourly_levels(rain, CFG['nguong'])
+    assert lv.iloc[0] == 0
+    assert np.isnan(lv.iloc[1]) and np.isnan(lv.iloc[2])
+    assert lv.iloc[3] == 2
+
+
+@pytest.mark.skipif(not (SRC.exists() and (OUT / 'flags.json').exists()), reason='model outputs missing')
+def test_yagi_red_before_scar_date():
+    import json
+    from model.rain_thresholds import draft_thresholds, load_rain
+    from model.warning import load_config
+    rain = load_rain(SRC)
+    cfg = load_config()
+    cfg['nguong'] = {k: v for k, v in draft_thresholds(rain).items() if k in ('mua_24h_mm', 'mua_72h_mm')}
+    flags = json.loads((OUT / 'flags.json').read_text(encoding='utf-8'))
+    r = run_backtest(rain, flags, cfg)
+    assert r['yagi_do_dau_tien']['Rất cao'] is not None
+    assert r['yagi_do_dau_tien']['Rất cao'] <= '2024-09-09 23:59'

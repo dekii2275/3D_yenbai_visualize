@@ -14,14 +14,18 @@ COLS = {'mua_24h': 'mua_24h_mm', 'mua_72h': 'mua_72h_mm'}
 
 
 def hourly_levels(rain: pd.DataFrame, thresholds: dict) -> pd.Series:
-    """Rain level 0-3 per hour (max of 24h and 72h, >= thresholds); NaN when both are missing."""
-    levels = []
-    for col, key in COLS.items():
-        v = rain[col].values
-        lv = np.searchsorted(np.asarray(thresholds[key], float), np.nan_to_num(v, nan=-1), side='right').astype(float)
-        lv[np.isnan(v)] = np.nan
-        levels.append(lv)
-    return pd.Series(np.fmax(*levels), index=rain.index)
+    """Rain level 0-3 per hour — same rule as model.warning.rain_level, vectorised."""
+    v24, v72 = rain['mua_24h'].values.astype(float), rain['mua_72h'].values.astype(float)
+    has24, has72 = ~np.isnan(v24), ~np.isnan(v72)
+    lvl = lambda v, key: np.searchsorted(np.sort(np.asarray(thresholds[key], float)), np.nan_to_num(v, nan=-1),
+                                         side='right').astype(float)
+    level = np.zeros(len(rain))
+    level = np.where(has24, np.maximum(level, lvl(v24, 'mua_24h_mm')), level)
+    level = np.where(has72, np.maximum(level, lvl(v72, 'mua_72h_mm')), level)
+    level = np.where(~has72 & has24, np.maximum(level, lvl(v24, 'mua_72h_mm')), level)
+    level[~(has24 & has72) & (level == 0)] = np.nan
+    level[~(has24 | has72)] = np.nan
+    return pd.Series(level, index=rain.index)
 
 
 def colour_hours(levels: pd.Series, config: dict) -> pd.DataFrame:
@@ -51,6 +55,11 @@ def _peak(colours: pd.Series) -> str:
     return max(colours, key=ORDER.index) if len(colours) else 'xám'
 
 
+def _first_red(colours: pd.Series):
+    red = colours.index[colours.values == 'đỏ']
+    return str(red[0])[:16] if len(red) else None
+
+
 def run_backtest(rain: pd.DataFrame, flags: list, config: dict) -> dict:
     colours = colour_hours(hourly_levels(rain, config['nguong']), config)
     day = colours.index.floor('D')
@@ -61,6 +70,8 @@ def run_backtest(rain: pd.DataFrame, flags: list, config: dict) -> dict:
         'so_ngay_co_mau': {c: {m: int((daily[c] == m).sum()) for m in ORDER} for c in CAP},
         'dot_do': {c: red_episodes(colours[c], rain) for c in CAP},
         'yagi': {c: _peak(colours.loc['2024-09-08':'2024-09-10', c]) for c in CAP},
+        'yagi_do_dau_tien': {c: _first_red(colours.loc['2024-09-06':'2024-09-14', c]) for c in CAP},
+        'yagi_ngay_vet_truot': '2024-09-09 (593/904 vết); còn lại 06–14/09',
         'dot_2025_10_01': {c: _peak(colours.loc['2025-09-29':'2025-10-01', c]) for c in CAP},
         'gio_thieu_so_lieu': int((colours[CAP[0]] == 'xám').sum()),
         'so_co_theo_cap': {c: sum(f['cap'] == c for f in flags) for c in CAP},

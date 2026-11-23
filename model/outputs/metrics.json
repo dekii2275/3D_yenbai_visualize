@@ -7,6 +7,12 @@
     "n_pos": 557,
     "n_neg": 1849
    },
+   "holdout_yen_bai_doc_ge5": {
+    "auc_roc": 0.5592,
+    "auc_pr": 0.3814,
+    "n_pos": 476,
+    "n_neg": 948
+   },
    "block_cv": {
     "auc_roc_mean": 0.6907,
     "auc_roc_std": 0.0337,
@@ -19,6 +25,12 @@
     "auc_pr": 0.4736,
     "n_pos": 557,
     "n_neg": 1849
+   },
+   "holdout_yen_bai_doc_ge5": {
+    "auc_roc": 0.653,
+    "auc_pr": 0.5029,
+    "n_pos": 476,
+    "n_neg": 948
    },
    "block_cv": {
     "auc_roc_mean": 0.777,

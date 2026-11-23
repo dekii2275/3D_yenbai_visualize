@@ -56,3 +56,10 @@ def test_outputs_real():
     flags = json.loads((OUT / 'flags.json').read_text(encoding='utf-8'))
     assert len(flags) == 87
     assert all(f['cap'] in CAP or f['cap'] is None for f in flags)
+
+
+@pytest.mark.skipif(not (OUT / 'metrics.json').exists(), reason='model not trained')
+def test_slope_domain_auc_reported():
+    m = json.loads((OUT / 'metrics.json').read_text(encoding='utf-8'))
+    d = m['models'][m['chosen']]['holdout_yen_bai_doc_ge5']
+    assert 0 < d['auc_roc'] <= 1 and d['n_pos'] > 0

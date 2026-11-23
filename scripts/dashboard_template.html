@@ -445,9 +445,15 @@ const CAP_COL=['#e4ead2','#f2cf7e','#e8875a','#b8302f'];
 const capScale=[[0,CAP_COL[0]],[0.25,CAP_COL[0]],[0.25,CAP_COL[1]],[0.5,CAP_COL[1]],[0.5,CAP_COL[2]],[0.75,CAP_COL[2]],[0.75,CAP_COL[3]],[1,CAP_COL[3]]];
 const WARN_COL={'xanh':'#0ca30c','vàng':'#fab219','cam':'#ec835a','đỏ':'#d03b3b','xám':'#9a9890'};
 // Same rule as model/warning.py: level = max(24h, 72h) with >=; both missing → grey.
+// Partial data never reads as safe: 24h alone is also scored on 72h thresholds; level 0 with one value missing → null.
 function rainLevel(r24,r72,t){
-  const lv=[[r24,t.mua_24h_mm],[r72,t.mua_72h_mm]].filter(([v])=>v!==null&&v!==''&&isFinite(v)).map(([v,c])=>c.filter(x=>+v>=x).length);
-  return lv.length?Math.max(...lv):null;
+  const ok=v=>v!==null&&v!==''&&isFinite(v), L=(v,c)=>c.filter(x=>+v>=x).length;
+  const h24=ok(r24), h72=ok(r72);
+  if(!h24&&!h72)return null;
+  let l=0;
+  if(h24)l=Math.max(l,L(r24,t.mua_24h_mm));
+  if(h72)l=Math.max(l,L(r72,t.mua_72h_mm));else l=Math.max(l,L(r24,t.mua_72h_mm));
+  return (!(h24&&h72)&&l===0)?null:l;
 }
 function warnLevel(cap,r24,r72,cfg){
   const l=rainLevel(r24,r72,cfg.nguong);
@@ -465,7 +471,7 @@ renderers.model=()=>{
   const hiShare=(hold['Cao']+hold['Rất cao'])/hn, hiArea=mt.area_share_by_class['Cao']+mt.area_share_by_class['Rất cao'];
   kpis('#mKpis',[
     {v:names[mt.chosen],l:'Mô hình được chọn',d:`${fmt(mt.n_samples.positive)} ô vết trượt · ${fmt(mt.n_samples.negative)} ô không trượt`},
-    {v:fmt(ch.holdout_yen_bai.auc_roc,3),l:'AUC-ROC kiểm tra trên phường Yên Bái',d:`AUC-PR ${fmt(ch.holdout_yen_bai.auc_pr,3)} (ngẫu nhiên ≈ ${fmt(ch.holdout_yen_bai.n_pos/(ch.holdout_yen_bai.n_pos+ch.holdout_yen_bai.n_neg),2)})`},
+    {v:fmt(ch.holdout_yen_bai.auc_roc,3),l:'AUC-ROC kiểm tra trên phường Yên Bái',d:`Chỉ trên đất dốc ≥ 5°: ${fmt(ch.holdout_yen_bai_doc_ge5.auc_roc,3)} · AUC-PR ${fmt(ch.holdout_yen_bai.auc_pr,3)} (ngẫu nhiên ≈ ${fmt(ch.holdout_yen_bai.n_pos/(ch.holdout_yen_bai.n_pos+ch.holdout_yen_bai.n_neg),2)})`},
     {v:fmt(ch.block_cv.auc_roc_mean,3),l:'AUC-ROC block-CV (khối 1 km)',d:`± ${fmt(ch.block_cv.auc_roc_std,3)}`},
     {v:fmt(hiShare*100,0)+'%',l:'Ô vết Yagi ở Yên Bái rơi vào cấp Cao/Rất cao',d:`Hai cấp này chỉ chiếm ${fmt(hiArea*100,0)}% diện tích (mô hình không học Yên Bái)`},
   ]);
@@ -492,17 +498,17 @@ renderers.model=()=>{
   const imp=mt.importance, ik=Object.keys(imp);
   hbar('cImp',{labels:ik,values:ik.map(k=>imp[k])},css('--s1'),{d:3,h:440});
   $('#impNote').textContent=mt.chosen==='random_forest'?'Độ giảm tạp chất trung bình (Random Forest), chuẩn hoá tổng = 1':'|hệ số| chuẩn hoá của hồi quy logistic';
-  table('#mTbl',Object.entries(mt.models).map(([k,v])=>({m:names[k]+(k===mt.chosen?' ✓':''),a:v.holdout_yen_bai.auc_roc,p:v.holdout_yen_bai.auc_pr,b:v.block_cv.auc_roc_mean,s:v.block_cv.auc_roc_std})),
-    [{h:'Mô hình',k:'m'},{h:'AUC-ROC holdout',k:'a',num:true,d:3},{h:'AUC-PR holdout',k:'p',num:true,d:3},{h:'AUC-ROC block-CV',k:'b',num:true,d:3},{h:'±',k:'s',num:true,d:3}]);
+  table('#mTbl',Object.entries(mt.models).map(([k,v])=>({m:names[k]+(k===mt.chosen?' ✓':''),a:v.holdout_yen_bai.auc_roc,a5:v.holdout_yen_bai_doc_ge5.auc_roc,p:v.holdout_yen_bai.auc_pr,b:v.block_cv.auc_roc_mean,s:v.block_cv.auc_roc_std})),
+    [{h:'Mô hình',k:'m'},{h:'AUC-ROC holdout',k:'a',num:true,d:3},{h:'… chỉ dốc ≥ 5°',k:'a5',num:true,d:3},{h:'AUC-PR holdout',k:'p',num:true,d:3},{h:'AUC-ROC block-CV',k:'b',num:true,d:3},{h:'±',k:'s',num:true,d:3}]);
   $('#scarNote').innerHTML=`Ô vết Yagi trong phường Yên Bái theo cấp (mô hình không học Yên Bái): `+CAPS.map(c=>`${c} ${hold[c]}`).join(' · ')+
     `. Cờ theo cấp: `+Object.entries(mt.flags_by_class).map(([k,v])=>`${k} ${v}`).join(' · ')+`. ${esc(mt.note)}`;
   $('#thrNote').textContent=th.cach_tinh;
   table('#thrTbl',['R1','R2','R3'].map((r,i)=>({r,a:th.mua_24h_mm[i],na:th.so_ngay_vuot.mua_24h_mm[i],b:th.mua_72h_mm[i],nb:th.so_ngay_vuot.mua_72h_mm[i]})),
     [{h:'Mức',k:'r'},{h:'Mưa 24h ≥ (mm)',k:'a',num:true,d:0},{h:'Số ngày vượt',k:'na',num:true,d:0},{h:'Mưa 72h ≥ (mm)',k:'b',num:true,d:0},{h:'Số ngày vượt',k:'nb',num:true,d:0}]);
-  $('#thrRef').innerHTML=`Đỉnh Yagi: ${fmt(th.yagi_dinh.mua_24h,1)} mm/24h, ${fmt(th.yagi_dinh.mua_72h,1)} mm/72h. Đối chiếu QĐ 18/2021: ${esc(th.doi_chieu)}`;
+  $('#thrRef').innerHTML=`Mưa đạt đến hết 09/09/2024 (ngày của đa số vết trượt): ${fmt(th.yagi_den_09_09.mua_24h,1)} mm/24h, ${fmt(th.yagi_den_09_09.mua_72h,1)} mm/72h; đỉnh Yagi: ${fmt(th.yagi_dinh.mua_24h,1)} / ${fmt(th.yagi_dinh.mua_72h,1)} mm. Cờ “Rất cao” lên đỏ lần đầu lúc <b>${esc(bt.yagi_do_dau_tien['Rất cao']??'không')}</b>. Đối chiếu QĐ 18/2021: ${esc(th.doi_chieu)}`;
   table('#mxTbl',['R0','R1','R2','R3'].map(r=>Object.assign({r},...CAPS.map((c,i)=>({[c]:cfg.ma_tran[r][i]})))),
     [{h:'Mưa \\ Cấp',k:'r'},...CAPS.map(c=>({h:c,k:r=>tag(r[c])+(r[c]==='đỏ'?' + còi':''),html:true}))]);
-  $('#btNote').textContent=`${bt.tu} → ${bt.den}. ${bt.dinh_nghia} Giờ thiếu số liệu: ${fmt(bt.gio_thieu_so_lieu)}.`;
+  $('#btNote').textContent=`${bt.tu} → ${bt.den}. ${bt.dinh_nghia} Giờ xám (thiếu hoặc thiếu một phần số liệu): ${fmt(bt.gio_thieu_so_lieu)}.`;
   table('#btTbl',CAPS.map(c=>Object.assign({c,n:bt.so_co_theo_cap[c]},bt.so_ngay_co_mau[c])),
     [{h:'Cấp (số cờ)',k:r=>`${r.c} (${r.n})`},...['xanh','vàng','cam','đỏ','xám'].map(m=>({h:'Ngày '+m,k:m,num:true,d:0}))]);
   const ep=[];CAPS.forEach(c=>bt.dot_do[c].forEach(e=>ep.push(Object.assign({c},e))));
@@ -512,7 +518,9 @@ renderers.model=()=>{
     {h:'Màu cao nhất',k:r=>r.kq?tag(r.kq):tag('đỏ'),html:true}]);
   $('#mLimits').innerHTML=[
     'Toàn bộ nhãn trượt lở đến từ một trận bão (Yagi, 09/2024); mô hình học “nơi Yagi gây trượt”, chưa chắc khái quát cho trận mưa khác.',
-    `Ngưỡng R3 (${th.mua_24h_mm[2]} mm/24h, ${th.mua_72h_mm[2]} mm/72h) gần bằng đỉnh Yagi, nên chỉ Yagi vượt; đợt 01/10/2025 (≈325 mm/72h) chỉ lên cam. Cần cơ quan chuyên môn đặt lại ngưỡng.`,
+    `Ngưỡng R3 (${th.mua_24h_mm[2]} mm/24h, ${th.mua_72h_mm[2]} mm/72h) được neo theo lượng mưa của chính Yagi đến hết 09/09 – chỉ dựa trên một sự kiện. Trong ${bt.tu.slice(0,4)}–${bt.den.slice(0,4)}, cờ “Rất cao” đỏ ${bt.so_ngay_co_mau['Rất cao']['đỏ']} ngày; đợt 29/09–01/10/2025 lên ${bt.dot_2025_10_01['Rất cao']} nhưng dữ liệu không cho biết đợt đó có gây trượt hay không. Cần cơ quan chuyên môn đặt lại ngưỡng.`,
+    `Thiết bị phát hiện vết trượt chỉ ghi nhận vết có độ dốc trung bình ≥ 5° và diện tích ≥ 500 m²; một phần AUC đến từ việc tách đất bằng khỏi đất dốc (AUC chỉ trên đất dốc ≥ 5°: ${fmt(ch.holdout_yen_bai_doc_ge5.auc_roc,3)}). Vùng bằng, nhiều nhà, sát đường bị “mù” với dữ liệu nhãn.`,
+    'Bản đồ và cấp của cờ lấy từ mô hình cuối (đã học cả Yên Bái), nên trong phường Yên Bái trông khớp hơn thực tế; con số kiểm định là bản holdout ở trên.',
     '87 điểm cờ không độc lập với vết Yagi (đa số cách vết < 100 m), nên không dùng để chứng minh độ chính xác.',
     'Một chuỗi mưa cho cả phường (không có toạ độ trạm); số giờ thiếu số liệu đáng kể – hệ thống thật phải báo “mất tín hiệu” (xám), không coi là an toàn.',
     'Biến lấy từ DEM 30 m và OSM; chưa có độ ẩm đất, thảm phủ, cắt taluy thực tế.',

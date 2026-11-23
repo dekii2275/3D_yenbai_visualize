@@ -15,18 +15,38 @@ def load_config(path: Path = CONFIG) -> dict:
 
 
 def _missing(v) -> bool:
-    return v is None or (isinstance(v, float) and math.isnan(v))
+    """None, any float/numpy NaN, pd.NA or non-numeric → missing."""
+    if v is None:
+        return True
+    try:
+        return math.isnan(float(v))
+    except (TypeError, ValueError):
+        return True
 
 
 def _level(value: float, cuts) -> int:
-    return sum(value >= c for c in cuts)
+    return int(sum(float(value) >= c for c in cuts))
 
 
 def rain_level(mua_24h, mua_72h, thresholds: dict):
-    """Highest of the 24h and 72h levels (0-3); None when both values are missing."""
-    levels = [_level(v, thresholds[k]) for v, k in ((mua_24h, 'mua_24h_mm'), (mua_72h, 'mua_72h_mm'))
-              if not _missing(v)]
-    return max(levels) if levels else None
+    """Highest of the 24h and 72h levels (0-3, thresholds inclusive).
+
+    Missing data never reads as safe: with only 24h known it is also scored against the 72h
+    thresholds (72h rain ≥ 24h rain); with one value missing a level-0 result is unknown → None.
+    """
+    has24, has72 = not _missing(mua_24h), not _missing(mua_72h)
+    if not (has24 or has72):
+        return None
+    level = 0
+    if has24:
+        level = max(level, _level(mua_24h, thresholds['mua_24h_mm']))
+    if has72:
+        level = max(level, _level(mua_72h, thresholds['mua_72h_mm']))
+    elif has24:
+        level = max(level, _level(mua_24h, thresholds['mua_72h_mm']))
+    if not (has24 and has72) and level == 0:
+        return None
+    return level
 
 
 def warning_level(cap, mua_24h, mua_72h, config: dict) -> dict:

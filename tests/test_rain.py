@@ -23,3 +23,11 @@ def test_thresholds_real():
         assert t[k][0] < t[k][1] < t[k][2]
     assert t['yagi_dinh']['mua_72h'] >= t['mua_72h_mm'][2]
     assert t['ghi_chu'] == NOTE
+
+
+@pytest.mark.skipif(not SRC.exists(), reason='raw data not extracted')
+def test_r3_reached_by_scar_date():
+    rain = load_rain(SRC)
+    t = draft_thresholds(rain)
+    before = rain.loc['2024-09-06':'2024-09-09 23:59']
+    assert before.mua_24h.max() >= t['mua_24h_mm'][2] or before.mua_72h.max() >= t['mua_72h_mm'][2]

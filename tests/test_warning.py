@@ -49,3 +49,19 @@ def test_config_file_matrix():
     cfg = load_config()
     assert cfg["ma_tran"]["R3"] == ["vàng", "cam", "đỏ", "đỏ"]
     assert cfg["ghi_chu"] == NOTE
+
+
+def test_numpy_nan_is_missing():
+    import numpy as np
+    out = warning_level("Rất cao", np.float32("nan"), np.float32("nan"), CFG)
+    assert out == {"mau": "xám", "coi": False, "muc_mua": None}
+    lvl = warning_level("Rất cao", np.float64(500), np.float64(500), CFG)["muc_mua"]
+    assert type(lvl) is int
+
+
+def test_partial_rain_cannot_show_safe():
+    # 72h missing: 24h is a lower bound of 72h; a level-0 result with partial data is unknown, not safe.
+    assert rain_level(30, None, T) is None
+    assert rain_level(None, 50, T) is None
+    assert rain_level(170, None, T) == 2
+    assert warning_level("Rất cao", 30, float("nan"), CFG)["mau"] == "xám"
