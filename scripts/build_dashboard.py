@@ -97,6 +97,25 @@ def inventory():
     return files
 
 
+MODEL_OUT = ROOT / 'model' / 'outputs'
+
+
+def model_section(x0, y0):
+    """Trial model results from model/outputs (None when the model has not been run)."""
+    if not (MODEL_OUT / 'metrics.json').exists():
+        return None
+    load = lambda n: json.loads((MODEL_OUT / n).read_text(encoding='utf-8'))
+    cls = np.array(Image.open(MODEL_OUT / 'susceptibility_class.tif'), dtype=float)
+    cls[cls == 255] = np.nan
+    flags = load('flags.json')
+    for f in flags:
+        f['kx'] = round((f['x'] - x0) / 1000, 4)
+        f['ky'] = round((f['y'] - y0) / 1000, 4)
+    return dict(metrics=load('metrics.json'), thresholds=load('thresholds.json'), backtest=load('backtest.json'),
+                config=json.loads((ROOT / 'model' / 'config.json').read_text(encoding='utf-8')), flags=flags,
+                classes=[[None if not np.isfinite(v) else int(v) for v in row] for row in cls])
+
+
 def main():
     out = {}
     out['inventory'] = inventory()
@@ -384,6 +403,8 @@ def main():
         origin=[r(x0, 1), r(y0, 1)], zrange=[r(np.nanmin(dem)), r(np.nanmax(dem))],
         extent_km=[r(sx_km.max()), r(sy_km.max())],
     )
+
+    out['model'] = model_section(x0, y0)
 
     payload = json.dumps(out, ensure_ascii=False, separators=(',', ':')).replace('NaN', 'null').replace('</', '<\\/')
     html = TEMPLATE.read_text(encoding='utf-8').replace('/*__DATA__*/null', payload)

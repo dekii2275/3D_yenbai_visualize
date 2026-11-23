@@ -37,3 +37,19 @@ python scripts/build_dashboard.py
 ```
 
 Cần pandas, pyarrow, openpyxl, geopandas, shapely, numpy và Pillow.
+
+## Mô hình dự báo thử nghiệm
+
+> Thử nghiệm – ngưỡng nháp, cần cơ quan chuyên môn xác nhận. Không dùng để ra quyết định an toàn.
+
+Gói `model/` kết hợp hai phần: mô hình **mức độ dễ trượt** theo ô 30 m (Random Forest/hồi quy logistic, học từ vết trượt vệ tinh bão Yagi, kiểm định trên phường Yên Bái) và **ngưỡng mưa nháp** R0–R3 (mưa 24h/72h). Quy tắc trong `model/warning.py` + `model/config.json` ghép hai phần thành màu cờ (xanh/vàng/cam/đỏ, còi khi đỏ; thiếu số liệu mưa → xám).
+
+```bash
+python -m model.run_all            # bộ dữ liệu → mô hình → ngưỡng mưa → backtest
+python -m pytest                   # kiểm thử
+python scripts/build_dashboard.py  # cập nhật tab "Mô hình dự báo"
+```
+
+Đầu ra trong `model/outputs/`: `susceptibility_prob.tif`, `susceptibility_class.tif`, `flags.csv`/`flags.json` (87 điểm cờ và cấp), `metrics.json`, `thresholds.json`, `backtest.json`. Cần thêm scikit-learn, scipy, pytest.
+
+Giới hạn: mọi nhãn đến từ một trận bão (Yagi, 09/2024); ngưỡng R3 gần bằng đỉnh Yagi; 87 điểm cờ không độc lập với vết Yagi; một chuỗi mưa chung cho cả phường. Thiết kế: `docs/superpowers/specs/2026-11-23-mo-hinh-du-bao-sat-lo-design.md`.

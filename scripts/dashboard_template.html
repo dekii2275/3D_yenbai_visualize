@@ -85,6 +85,7 @@ code{background:var(--surface-2);padding:0 4px;border-radius:4px;font-size:12px}
   <button role="tab" data-tab="rain">Mưa</button>
   <button role="tab" data-tab="terrain">Địa hình &amp; nền</button>
   <button role="tab" data-tab="quality">Chất lượng dữ liệu</button>
+  <button role="tab" data-tab="model">Mô hình dự báo</button>
   <button role="tab" data-tab="geo3d">Bản đồ GeoGIS 3D</button>
 </nav>
 <main>
@@ -162,10 +163,36 @@ code{background:var(--surface-2);padding:0 4px;border-radius:4px;font-size:12px}
   <div class="card"><h2>Vấn đề chất lượng dữ liệu</h2><p class="note">Ưu tiên xử lý trước khi dùng để phân tích hoặc ra quyết định</p><div class="tbl" style="max-height:none" id="qTbl"></div></div>
 </section>
 
+<section id="tab-model" hidden>
+  <div id="modelEmpty" class="card" hidden><h2>Chưa chạy mô hình</h2><p class="note">Chạy <code>python -m model.run_all</code> rồi <code>python scripts/build_dashboard.py</code>.</p></div>
+  <div id="modelBody">
+  <div class="card" style="margin-bottom:16px;border-color:var(--serious)"><b>Thử nghiệm.</b> <span id="mNote"></span> Ngưỡng mưa chỉ học từ một trận bão (Yagi 09/2024); kết quả không dùng để ra quyết định an toàn.</div>
+  <div class="grid" id="mKpis"></div>
+  <div class="grid" style="margin-top:16px">
+    <div class="card c7"><h2>Bản đồ cấp dễ trượt và màu cờ</h2>
+      <div class="controls">
+        <label>Mưa 24h (mm) <input id="r24" type="number" min="0" step="10" value="0" style="width:90px"></label>
+        <label>Mưa 72h (mm) <input id="r72" type="number" min="0" step="10" value="0" style="width:90px"></label>
+        <span id="sim"></span>
+      </div>
+      <p class="note">Nền: cấp dễ trượt (ô 30 m). Điểm: 87 cờ, tô màu cảnh báo theo lượng mưa nhập; để trống = thiếu số liệu (xám).</p>
+      <div class="chart" style="height:460px" id="cSus"></div></div>
+    <div class="card c5"><h2>Độ quan trọng của biến</h2><p class="note" id="impNote"></p><div class="chart" style="height:460px" id="cImp"></div></div>
+    <div class="card c6"><h2>So sánh mô hình (kiểm định không gian)</h2><p class="note">Holdout: học 4 phường lân cận, kiểm tra trên phường Yên Bái. Block-CV: 5 nhóm khối 1 km.</p><div class="tbl" id="mTbl"></div>
+      <p class="note" style="margin-top:10px" id="scarNote"></p></div>
+    <div class="card c6"><h2>Ngưỡng mưa nháp</h2><p class="note" id="thrNote"></p><div class="tbl" id="thrTbl"></div><p class="note" style="margin-top:8px" id="thrRef"></p></div>
+    <div class="card c6"><h2>Quy tắc màu cờ</h2><p class="note">Mức mưa = mức cao nhất của mưa 24h và 72h; còi khi đỏ</p><div class="tbl" id="mxTbl"></div></div>
+    <div class="card c6"><h2>Chạy thử lại 2021–2026</h2><p class="note" id="btNote"></p><div class="tbl" id="btTbl"></div></div>
+    <div class="card c12"><h2>Các đợt cờ đỏ và kiểm tra sự kiện</h2><div class="tbl" id="epTbl"></div></div>
+    <div class="card c12"><h2>Giới hạn</h2><ul class="find" id="mLimits"></ul></div>
+  </div>
+  </div>
+</section>
+
 <section id="tab-geo3d" hidden>
   <div class="card">
     <div class="controls">
-      <label>Màu địa hình <select id="colorBy"><option value="z">Cao độ</option><option value="slope">Độ dốc</option></select></label>
+      <label>Màu địa hình <select id="colorBy"><option value="z">Cao độ</option><option value="slope">Độ dốc</option><option value="cap">Cấp dễ trượt (mô hình)</option></select></label>
       <label>Phóng đại cao độ <input type="range" id="exag" min="1" max="10" step="0.5" value="4"> <span id="exagV">4×</span></label>
       <span style="color:var(--text-2)">Lớp:</span>
       <label><input type="checkbox" data-layer="ward" checked> Ranh giới</label>
@@ -412,6 +439,86 @@ renderers.quality=()=>{
   table('#qTbl',q.map(([l,c,t,d,a])=>({l,c,t,d,a})),[{h:'Mức',k:r=>`<span class="tag ${r.l}">${lvl[r.l]}</span>`,html:true},{h:'Nhóm',k:'c'},{h:'Vấn đề',k:'t'},{h:'Chi tiết',k:'d',html:true},{h:'Đề xuất',k:'a'}]);
 };
 
+// ---------- trial model
+const CAPS=['Thấp','Trung bình','Cao','Rất cao'];
+const CAP_COL=['#e4ead2','#f2cf7e','#e8875a','#b8302f'];
+const capScale=[[0,CAP_COL[0]],[0.25,CAP_COL[0]],[0.25,CAP_COL[1]],[0.5,CAP_COL[1]],[0.5,CAP_COL[2]],[0.75,CAP_COL[2]],[0.75,CAP_COL[3]],[1,CAP_COL[3]]];
+const WARN_COL={'xanh':'#0ca30c','vàng':'#fab219','cam':'#ec835a','đỏ':'#d03b3b','xám':'#9a9890'};
+// Same rule as model/warning.py: level = max(24h, 72h) with >=; both missing → grey.
+function rainLevel(r24,r72,t){
+  const lv=[[r24,t.mua_24h_mm],[r72,t.mua_72h_mm]].filter(([v])=>v!==null&&v!==''&&isFinite(v)).map(([v,c])=>c.filter(x=>+v>=x).length);
+  return lv.length?Math.max(...lv):null;
+}
+function warnLevel(cap,r24,r72,cfg){
+  const l=rainLevel(r24,r72,cfg.nguong);
+  if(cap===null||l===null)return {mau:'xám',coi:false,muc:l};
+  const m=cfg.ma_tran['R'+l][CAPS.indexOf(cap)];return {mau:m,coi:m==='đỏ',muc:l};
+}
+const tag=m=>`<span class="sw" style="background:${WARN_COL[m]}"></span>${esc(m)}`;
+renderers.model=()=>{
+  const M=D.model;
+  if(!M){$('#modelEmpty').hidden=false;$('#modelBody').hidden=true;return;}
+  const mt=M.metrics, ch=mt.models[mt.chosen], th=M.thresholds, bt=M.backtest, cfg=M.config;
+  const names={logistic:'Hồi quy logistic',random_forest:'Random Forest'};
+  $('#mNote').textContent=cfg.ghi_chu+'.';
+  const hold=mt.yen_bai_scar_cells_by_class_holdout, hn=Object.values(hold).reduce((a,b)=>a+b,0);
+  const hiShare=(hold['Cao']+hold['Rất cao'])/hn, hiArea=mt.area_share_by_class['Cao']+mt.area_share_by_class['Rất cao'];
+  kpis('#mKpis',[
+    {v:names[mt.chosen],l:'Mô hình được chọn',d:`${fmt(mt.n_samples.positive)} ô vết trượt · ${fmt(mt.n_samples.negative)} ô không trượt`},
+    {v:fmt(ch.holdout_yen_bai.auc_roc,3),l:'AUC-ROC kiểm tra trên phường Yên Bái',d:`AUC-PR ${fmt(ch.holdout_yen_bai.auc_pr,3)} (ngẫu nhiên ≈ ${fmt(ch.holdout_yen_bai.n_pos/(ch.holdout_yen_bai.n_pos+ch.holdout_yen_bai.n_neg),2)})`},
+    {v:fmt(ch.block_cv.auc_roc_mean,3),l:'AUC-ROC block-CV (khối 1 km)',d:`± ${fmt(ch.block_cv.auc_roc_std,3)}`},
+    {v:fmt(hiShare*100,0)+'%',l:'Ô vết Yagi ở Yên Bái rơi vào cấp Cao/Rất cao',d:`Hai cấp này chỉ chiếm ${fmt(hiArea*100,0)}% diện tích (mô hình không học Yên Bái)`},
+  ]);
+  // susceptibility map + flags coloured by the simulated warning
+  const S=D.scene;
+  const draw=()=>{
+    const r24=$('#r24').value, r72=$('#r72').value;
+    const w=M.flags.map(f=>warnLevel(f.cap,r24===''?null:+r24,r72===''?null:+r72,cfg));
+    const cnt={};w.forEach(x=>cnt[x.mau]=(cnt[x.mau]||0)+1);
+    const lvl=rainLevel(r24===''?null:+r24,r72===''?null:+r72,cfg.nguong);
+    $('#sim').innerHTML=`Mức mưa: <b>${lvl===null?'thiếu số liệu':'R'+lvl}</b> · `+Object.entries(cnt).map(([k,v])=>`${tag(k)} ${v}`).join(' · ')+(w.some(x=>x.coi)?' · <b style="color:var(--critical)">CÒI BẬT</b>':'');
+    const traces=[
+      {type:'heatmap',x:S.x,y:S.y,z:M.classes,zmin:-0.5,zmax:3.5,colorscale:capScale,hoverongaps:false,
+        colorbar:{title:{text:'Cấp dễ trượt',side:'right'},tickvals:[0,1,2,3],ticktext:CAPS,thickness:12,tickfont:{color:css('--text-2')}},
+        customdata:M.classes.map(r=>r.map(v=>v===null?'':CAPS[v])),hovertemplate:'%{customdata}<extra></extra>'},
+      {type:'scatter',mode:'markers',x:M.flags.map(f=>f.kx),y:M.flags.map(f=>f.ky),
+        marker:{size:10,color:w.map(x=>WARN_COL[x.mau]),line:{color:'#111',width:1.2},symbol:M.flags.map(f=>f.trang_thai==='Đã xảy ra'?'diamond':'circle')},
+        text:M.flags.map((f,i)=>`<b>${esc(f.ma_vi_tri)}</b> · ${esc(f.ten_diem)}<br>Cấp: ${f.cap??'không xác định'} (p=${fmt(f.xac_suat,2)})<br>Cờ: ${w[i].mau}${w[i].coi?' + còi':''}`),
+        hovertemplate:'%{text}<extra></extra>',showlegend:false}];
+    Plotly.react('cSus',traces,base({margin:{l:40,r:10,t:8,b:36},xaxis:{title:{text:'Đông (km)'},gridcolor:css('--grid'),constrain:'domain'},
+      yaxis:{title:{text:'Bắc (km)'},gridcolor:css('--grid'),scaleanchor:'x'}}),CFG);
+  };
+  $('#r24').oninput=draw;$('#r72').oninput=draw;draw();
+  const imp=mt.importance, ik=Object.keys(imp);
+  hbar('cImp',{labels:ik,values:ik.map(k=>imp[k])},css('--s1'),{d:3,h:440});
+  $('#impNote').textContent=mt.chosen==='random_forest'?'Độ giảm tạp chất trung bình (Random Forest), chuẩn hoá tổng = 1':'|hệ số| chuẩn hoá của hồi quy logistic';
+  table('#mTbl',Object.entries(mt.models).map(([k,v])=>({m:names[k]+(k===mt.chosen?' ✓':''),a:v.holdout_yen_bai.auc_roc,p:v.holdout_yen_bai.auc_pr,b:v.block_cv.auc_roc_mean,s:v.block_cv.auc_roc_std})),
+    [{h:'Mô hình',k:'m'},{h:'AUC-ROC holdout',k:'a',num:true,d:3},{h:'AUC-PR holdout',k:'p',num:true,d:3},{h:'AUC-ROC block-CV',k:'b',num:true,d:3},{h:'±',k:'s',num:true,d:3}]);
+  $('#scarNote').innerHTML=`Ô vết Yagi trong phường Yên Bái theo cấp (mô hình không học Yên Bái): `+CAPS.map(c=>`${c} ${hold[c]}`).join(' · ')+
+    `. Cờ theo cấp: `+Object.entries(mt.flags_by_class).map(([k,v])=>`${k} ${v}`).join(' · ')+`. ${esc(mt.note)}`;
+  $('#thrNote').textContent=th.cach_tinh;
+  table('#thrTbl',['R1','R2','R3'].map((r,i)=>({r,a:th.mua_24h_mm[i],na:th.so_ngay_vuot.mua_24h_mm[i],b:th.mua_72h_mm[i],nb:th.so_ngay_vuot.mua_72h_mm[i]})),
+    [{h:'Mức',k:'r'},{h:'Mưa 24h ≥ (mm)',k:'a',num:true,d:0},{h:'Số ngày vượt',k:'na',num:true,d:0},{h:'Mưa 72h ≥ (mm)',k:'b',num:true,d:0},{h:'Số ngày vượt',k:'nb',num:true,d:0}]);
+  $('#thrRef').innerHTML=`Đỉnh Yagi: ${fmt(th.yagi_dinh.mua_24h,1)} mm/24h, ${fmt(th.yagi_dinh.mua_72h,1)} mm/72h. Đối chiếu QĐ 18/2021: ${esc(th.doi_chieu)}`;
+  table('#mxTbl',['R0','R1','R2','R3'].map(r=>Object.assign({r},...CAPS.map((c,i)=>({[c]:cfg.ma_tran[r][i]})))),
+    [{h:'Mưa \\ Cấp',k:'r'},...CAPS.map(c=>({h:c,k:r=>tag(r[c])+(r[c]==='đỏ'?' + còi':''),html:true}))]);
+  $('#btNote').textContent=`${bt.tu} → ${bt.den}. ${bt.dinh_nghia} Giờ thiếu số liệu: ${fmt(bt.gio_thieu_so_lieu)}.`;
+  table('#btTbl',CAPS.map(c=>Object.assign({c,n:bt.so_co_theo_cap[c]},bt.so_ngay_co_mau[c])),
+    [{h:'Cấp (số cờ)',k:r=>`${r.c} (${r.n})`},...['xanh','vàng','cam','đỏ','xám'].map(m=>({h:'Ngày '+m,k:m,num:true,d:0}))]);
+  const ep=[];CAPS.forEach(c=>bt.dot_do[c].forEach(e=>ep.push(Object.assign({c},e))));
+  ep.push(...CAPS.map(c=>({c,bat_dau:'Yagi 08–10/09/2024',ket_thuc:'',so_gio:'',mua_72h_max:'',kq:bt.yagi[c]})),
+          ...CAPS.map(c=>({c,bat_dau:'Đợt 29/09–01/10/2025',ket_thuc:'',so_gio:'',mua_72h_max:'',kq:bt.dot_2025_10_01[c]})));
+  table('#epTbl',ep,[{h:'Cấp',k:'c'},{h:'Đợt / bắt đầu',k:'bat_dau'},{h:'Kết thúc',k:'ket_thuc'},{h:'Số giờ đỏ',k:'so_gio'},{h:'Mưa 72h max',k:'mua_72h_max'},
+    {h:'Màu cao nhất',k:r=>r.kq?tag(r.kq):tag('đỏ'),html:true}]);
+  $('#mLimits').innerHTML=[
+    'Toàn bộ nhãn trượt lở đến từ một trận bão (Yagi, 09/2024); mô hình học “nơi Yagi gây trượt”, chưa chắc khái quát cho trận mưa khác.',
+    `Ngưỡng R3 (${th.mua_24h_mm[2]} mm/24h, ${th.mua_72h_mm[2]} mm/72h) gần bằng đỉnh Yagi, nên chỉ Yagi vượt; đợt 01/10/2025 (≈325 mm/72h) chỉ lên cam. Cần cơ quan chuyên môn đặt lại ngưỡng.`,
+    '87 điểm cờ không độc lập với vết Yagi (đa số cách vết < 100 m), nên không dùng để chứng minh độ chính xác.',
+    'Một chuỗi mưa cho cả phường (không có toạ độ trạm); số giờ thiếu số liệu đáng kể – hệ thống thật phải báo “mất tín hiệu” (xám), không coi là an toàn.',
+    'Biến lấy từ DEM 30 m và OSM; chưa có độ ẩm đất, thảm phủ, cắt taluy thực tế.',
+  ].map(s=>`<li>${s}</li>`).join('');
+};
+
 // ---------- 3D GIS
 renderers.geo3d=()=>{
   const S=D.scene, el='map3d';
@@ -452,9 +559,13 @@ renderers.geo3d=()=>{
     scene:{aspectmode:'manual',aspectratio:aspect(ex),camera:cam,xaxis:ax('Đông (km)'),yaxis:ax('Bắc (km)'),zaxis:Object.assign(ax('Cao độ (m)'),{})},uirevision:'keep'}),
     Object.assign({},CFG,{scrollZoom:true}));
   $('#exag').oninput=e=>{$('#exagV').textContent=e.target.value+'×';Plotly.relayout(el,{'scene.aspectratio':aspect(+e.target.value)})};
-  $('#colorBy').onchange=e=>{const s=e.target.value==='slope';
-    Plotly.restyle(el,{surfacecolor:[s?S.slope:S.z],colorscale:[s?slopeScale:elevScale],cmin:[s?0:S.zrange[0]],cmax:[s?30:S.zrange[1]],
-      'colorbar.title.text':[s?'Độ dốc (°)':'Cao độ (m)']},[0])};
+  if(!D.model)$('#colorBy option[value="cap"]').disabled=true;
+  $('#colorBy').onchange=e=>{const v=e.target.value;
+    const o=v==='cap'?{surfacecolor:D.model.classes,colorscale:capScale,cmin:-0.5,cmax:3.5,t:'Cấp dễ trượt',tv:[0,1,2,3],tt:CAPS}
+      :v==='slope'?{surfacecolor:S.slope,colorscale:slopeScale,cmin:0,cmax:30,t:'Độ dốc (°)'}
+      :{surfacecolor:S.z,colorscale:elevScale,cmin:S.zrange[0],cmax:S.zrange[1],t:'Cao độ (m)'};
+    Plotly.restyle(el,{surfacecolor:[o.surfacecolor],colorscale:[o.colorscale],cmin:[o.cmin],cmax:[o.cmax],'colorbar.title.text':[o.t],
+      'colorbar.tickvals':[o.tv||null],'colorbar.ticktext':[o.tt||null],'colorbar.tickmode':[o.tv?'array':'auto']},[0])};
   document.querySelectorAll('[data-layer]').forEach(cb=>cb.onchange=()=>{
     const key=cb.dataset.layer, idx=traces.map((t,i)=>t.meta===key?i:-1).filter(i=>i>=0);
     Plotly.restyle(el,{visible:cb.checked},idx)});
