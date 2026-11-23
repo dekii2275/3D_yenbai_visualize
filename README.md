@@ -27,3 +27,13 @@ Thư mục `data/` chứa dữ liệu gốc và được giữ cục bộ, khôn
 Mô hình lấy mẫu DEM để chạy trong trình duyệt và phóng đại độ cao để dễ nhìn. Lớp ảnh vệ tinh cần Internet và WebGL; chất lượng ảnh tùy nguồn Esri, không làm tăng độ phân giải của DEM gốc. Ảnh được tải trực tiếp về trình duyệt và không đóng gói trong image Docker. Các lớp đường, công trình và mặt nước lấy từ OpenStreetMap trong `nen_phuong_Yen_Bai.gpkg`; chỉ các đối tượng có dữ liệu địa hình phù hợp được vẽ. Công trình được dựng theo dấu chân với chiều cao minh họa đồng nhất, không phải chiều cao thực. Dữ liệu gốc không có vị trí cây hoặc ảnh vệ tinh; ảnh vệ tinh được cung cấp trực tuyến. Các vị trí không có ô độ cao hợp lệ ở gần sẽ không vẽ trên địa hình nhưng vẫn có trong danh sách. Chưa tích hợp mưa, các vùng vết trượt vệ tinh, cờ IoT hoặc thông báo tự động.
 
 Tệp `web/assets/data.json` chứa dữ liệu đã xử lý từ dữ liệu gốc (địa hình, vị trí trượt lở và các lớp bản đồ), được lưu trong kho mã và đóng gói sẵn trong image để ứng dụng chạy được mà không cần thư mục `data/`. Nếu dữ liệu gốc thay đổi, chạy `python3 scripts/prepare_data.py` với thư viện Pillow rồi build lại image. Quá trình build và chạy ứng dụng không cần Pillow.
+
+## Dashboard khám phá dữ liệu
+
+`dashboard.html` là báo cáo khám phá dữ liệu trong `data/` (tệp Excel, GeoPackage, raster, mưa) gồm các tab tổng quan, điểm trượt lở, đối chiếu Excel ↔ GeoPackage, vết trượt bão Yagi, mưa, địa hình & nền, chất lượng dữ liệu và bản đồ GeoGIS 3D (DEM 30 m với các lớp điểm, vết trượt, đường, mặt nước, đứt gãy). Mở trực tiếp bằng trình duyệt (cần Internet để tải Plotly). Tạo lại sau khi giải nén `data/du_lieu_phuong_Yen_Bai.rar` vào `data/du_lieu_phuong_Yen_Bai/`:
+
+```bash
+python scripts/build_dashboard.py
+```
+
+Cần pandas, pyarrow, openpyxl, geopandas, shapely, numpy và Pillow.

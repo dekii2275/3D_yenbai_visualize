@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khám phá dữ liệu Yên Bái</title>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f5f2;--surface:#fcfcfb;--surface-2:#f0efec;--border:#e2e0da;
+  --text:#0b0b0b;--text-2:#52514e;--muted:#7a7973;--grid:#e8e6e1;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#6250d6;
+  --critical:#d03b3b;--serious:#ec835a;--good:#0ca30c;--warning:#fab219;
+  --accent:#2a78d6;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211;--surface:#1a1a19;--surface-2:#242422;--border:#33332f;
+    --text:#f0efec;--text-2:#c3c2b7;--muted:#8f8e86;--grid:#2c2c29;
+    --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#9085e9;--accent:#3987e5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211;--surface:#1a1a19;--surface-2:#242422;--border:#33332f;
+  --text:#f0efec;--text-2:#c3c2b7;--muted:#8f8e86;--grid:#2c2c29;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#9085e9;--accent:#3987e5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 24px 0;max-width:1400px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:var(--text-2);margin:0 0 14px}
+nav{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border);max-width:1400px;margin:0 auto;padding:0 24px}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--text-2);padding:10px 12px;font:inherit;cursor:pointer}
+nav button:hover{color:var(--text)}
+nav button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1400px;margin:0 auto;padding:20px 24px 48px}
+section[hidden]{display:none}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;min-width:0}
+.c3{grid-column:span 3}.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+@media (max-width:1000px){.c3{grid-column:span 6}.c4,.c5,.c6,.c7,.c8{grid-column:span 12}}
+@media (max-width:560px){header,main,nav{padding-left:16px;padding-right:16px}.c3{grid-column:span 12}}
+.card h2{font-size:15px;margin:0 0 2px}
+.card .note{color:var(--text-2);font-size:12.5px;margin:0 0 8px}
+.kpi .v{font-size:28px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.2}
+.kpi .l{color:var(--text-2);font-size:13px}
+.kpi .d{color:var(--muted);font-size:12px;margin-top:4px}
+.chart{width:100%;height:300px}
+.chart.tall{height:380px}
+.tbl{overflow:auto;max-height:420px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+th{position:sticky;top:0;background:var(--surface-2);font-weight:600;color:var(--text-2)}
+td.num,th.num{text-align:right}
+ul.find{margin:0;padding-left:18px}ul.find li{margin:4px 0}
+.tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid currentColor}
+.tag.hi{color:var(--critical)}.tag.md{color:#b86a00}.tag.lo{color:var(--text-2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.md{color:var(--warning)}}
+:root[data-theme="dark"] .tag.md{color:var(--warning)}
+select,input[type=range]{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:4px 6px}
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin-bottom:10px;font-size:13px}
+.controls label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#map3d{width:100%;height:calc(100vh - 230px);min-height:520px}
+.theme{position:absolute;top:18px;right:24px}
+.theme button{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit}
+code{background:var(--surface-2);padding:0 4px;border-radius:4px;font-size:12px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:baseline}
+</style>
+</head>
+<body>
+<div class="theme"><button id="themeBtn" type="button">Giao diện: tự động</button></div>
+<header>
+  <h1>Khám phá dữ liệu trượt lở – phường Yên Bái (Lào Cai)</h1>
+  <p class="sub">Báo cáo khám phá dữ liệu trong thư mục <code>data/</code>: tệp Excel, 6 GeoPackage, 6 raster GeoTIFF và 3 bảng mưa Parquet.</p>
+</header>
+<nav role="tablist" id="tabs">
+  <button role="tab" data-tab="overview" aria-selected="true">Tổng quan</button>
+  <button role="tab" data-tab="points">Điểm trượt lở</button>
+  <button role="tab" data-tab="excel">Excel ↔ GeoPackage</button>
+  <button role="tab" data-tab="yagi">Vết trượt bão Yagi</button>
+  <button role="tab" data-tab="rain">Mưa</button>
+  <button role="tab" data-tab="terrain">Địa hình &amp; nền</button>
+  <button role="tab" data-tab="quality">Chất lượng dữ liệu</button>
+  <button role="tab" data-tab="geo3d">Bản đồ GeoGIS 3D</button>
+</nav>
+<main>
+
+<section id="tab-overview">
+  <div class="grid" id="kpis"></div>
+  <div class="grid" style="margin-top:16px">
+    <div class="card c6"><h2>Phát hiện chính</h2><ul class="find" id="findings"></ul></div>
+    <div class="card c6"><h2>Ranh giới phường</h2><p class="note">Từ <code>ranh_gioi_phuong_Yen_Bai.gpkg</code></p><div class="tbl" id="wardTbl"></div></div>
+    <div class="card c12"><h2>Danh mục tệp</h2><p class="note">Mọi tệp trong <code>data/</code> sau khi giải nén</p><div class="tbl" id="invTbl"></div></div>
+  </div>
+</section>
+
+<section id="tab-points" hidden>
+  <div class="grid">
+    <div class="card c4"><h2>Trạng thái điểm</h2><p class="note">87 điểm trong <code>truot_lo_phuong_Yen_Bai.gpkg</code></p><div class="chart" id="cStatus"></div></div>
+    <div class="card c8"><h2>Số điểm theo phường/xã cũ</h2><p class="note">Đã chuẩn hoá tiền tố “P.” (dữ liệu gốc có 10 cách ghi cho 7 đơn vị)</p><div class="chart" id="cXa"></div></div>
+    <div class="card c6"><h2>Phân bố độ dốc: điểm trượt so với toàn phường</h2><p class="note">% số điểm (hoặc % ô DEM 30 m trong ranh giới) theo khoảng độ dốc</p><div class="chart" id="cSlopeCmp"></div></div>
+    <div class="card c6"><h2>Hướng dốc: điểm trượt so với toàn phường</h2><p class="note">% theo 8 hướng</p><div class="chart" id="cAspect"></div></div>
+    <div class="card c6"><h2>Phân bố thuộc tính số</h2>
+      <div class="controls"><label>Thuộc tính <select id="numSel"></select></label></div>
+      <div class="chart" id="cNum"></div><p class="note" id="numStats"></p></div>
+    <div class="card c3"><h2>Nhóm đá nền</h2><div class="chart" id="cRock"></div></div>
+    <div class="card c3"><h2>Cấp đường gần nhất</h2><div class="chart" id="cRoad"></div></div>
+    <div class="card c12"><h2>7 điểm “Đã xảy ra”</h2><p class="note">Chỉ nhóm này có mô tả, thể tích và thông tin thạch học từ nguồn khảo sát</p><div class="tbl" id="occTbl"></div></div>
+    <div class="card c12"><h2>Bảng 87 điểm</h2><div class="tbl" id="ptTbl"></div></div>
+  </div>
+</section>
+
+<section id="tab-excel" hidden>
+  <div class="grid" id="xlKpis"></div>
+  <div class="grid" style="margin-top:16px">
+    <div class="card c5"><h2>Khoảng cách từ điểm Excel tới điểm GPKG gần nhất</h2><p class="note">Số dòng Excel theo khoảng cách (m)</p><div class="chart" id="cDist"></div></div>
+    <div class="card c7"><h2>Cách ghi tên phường cũ trong Excel</h2><p class="note">Cùng một đơn vị được ghi nhiều kiểu (có/không “P.”, thiếu dấu cách)</p><div class="chart" id="cXlXa"></div></div>
+    <div class="card c6"><h2>Dòng Excel không trùng toạ độ GPKG</h2><div class="tbl" id="xlUn"></div></div>
+    <div class="card c6"><h2>Điểm GPKG không có trong Excel</h2><div class="tbl" id="gpUn"></div></div>
+    <div class="card c12"><h2>Cột trong tệp Excel</h2><p class="note" id="xlCols"></p></div>
+  </div>
+</section>
+
+<section id="tab-yagi" hidden>
+  <div class="grid" id="yKpis"></div>
+  <div class="grid" style="margin-top:16px">
+    <div class="card c6"><h2>Diện tích vết trượt</h2><p class="note">Số vết theo khoảng diện tích (m²); vết nhỏ nhất bằng 5 pixel 10 m</p><div class="chart" id="cYArea"></div></div>
+    <div class="card c6"><h2>Độ dốc trung bình vết trượt</h2><p class="note">Số vết theo độ dốc (°)</p><div class="chart" id="cYSlope"></div></div>
+    <div class="card c4"><h2>Mức tin cậy</h2><div class="chart" id="cYConf"></div></div>
+    <div class="card c4"><h2>Mưa max 24h tại trạm gán</h2><div class="chart" id="cYRain"></div></div>
+    <div class="card c4"><h2>Vết trượt theo phường (lớp đầy đủ 904 vết)</h2><div class="chart" id="cYXa"></div></div>
+    <div class="card c12"><h2>Các trường của lớp vết trượt</h2><p class="note" id="yCols"></p></div>
+  </div>
+</section>
+
+<section id="tab-rain" hidden>
+  <div class="grid">
+    <div class="card c12"><h2>Lượng mưa tích luỹ lớn nhất trong ngày (2021–2026)</h2><p class="note">Từ <code>mua_tich_luy_truot.parquet</code> – giá trị lớn nhất mỗi ngày của cửa sổ 1, 3 và 7 ngày</p><div class="chart tall" id="cCum"></div></div>
+    <div class="card c7"><h2>Mưa ngày trong bão Yagi (01–15/09/2024)</h2><p class="note">Tổng mưa ngày từ dữ liệu giờ của 4 trạm quanh phường</p><div class="chart" id="cYagiRain"></div></div>
+    <div class="card c5"><h2>10 đợt mưa 3 ngày lớn nhất</h2><p class="note">Mỗi đợt cách nhau ≥ 7 ngày</p><div class="tbl" id="evTbl"></div></div>
+    <div class="card c7"><h2>Tổng mưa năm 2011–2024</h2><p class="note">Hai trạm ngày N089 và N090</p><div class="chart" id="cAnn"></div></div>
+    <div class="card c5"><h2>Mưa trung bình theo tháng</h2><p class="note">Trung bình tổng tháng 2011–2024</p><div class="chart" id="cMon"></div></div>
+    <div class="card c12"><h2>Độ phủ dữ liệu trạm</h2><div class="tbl" id="stTbl"></div></div>
+  </div>
+</section>
+
+<section id="tab-terrain" hidden>
+  <div class="grid">
+    <div class="card c6"><h2>Thống kê raster</h2><p class="note">“Phường” = ô có tâm nằm trong ranh giới; “Toàn ảnh” = mọi ô hợp lệ</p><div class="tbl" id="rTbl"></div></div>
+    <div class="card c6"><h2>Phân bố cao độ trong phường</h2><p class="note">Số ô DEM 30 m theo cao độ (m)</p><div class="chart" id="cDem"></div></div>
+    <div class="card c6"><h2>Diện tích nhóm đá trong phường (km²)</h2><div class="chart" id="cGeo"></div></div>
+    <div class="card c6"><h2>Chiều dài đường OSM trong phường (km)</h2><div class="chart" id="cRoadKm"></div></div>
+    <div class="card c12"><h2>Lớp OSM trong <code>nen_phuong_Yen_Bai.gpkg</code></h2><div class="tbl" id="osmTbl"></div></div>
+  </div>
+</section>
+
+<section id="tab-quality" hidden>
+  <div class="card"><h2>Vấn đề chất lượng dữ liệu</h2><p class="note">Ưu tiên xử lý trước khi dùng để phân tích hoặc ra quyết định</p><div class="tbl" style="max-height:none" id="qTbl"></div></div>
+</section>
+
+<section id="tab-geo3d" hidden>
+  <div class="card">
+    <div class="controls">
+      <label>Màu địa hình <select id="colorBy"><option value="z">Cao độ</option><option value="slope">Độ dốc</option></select></label>
+      <label>Phóng đại cao độ <input type="range" id="exag" min="1" max="10" step="0.5" value="4"> <span id="exagV">4×</span></label>
+      <span style="color:var(--text-2)">Lớp:</span>
+      <label><input type="checkbox" data-layer="ward" checked> Ranh giới</label>
+      <label><input type="checkbox" data-layer="pts" checked> Điểm trượt (GPKG)</label>
+      <label><input type="checkbox" data-layer="excel"> Điểm Excel lệch</label>
+      <label><input type="checkbox" data-layer="yagi" checked> Vết trượt Yagi</label>
+      <label><input type="checkbox" data-layer="roads" checked> Đường chính</label>
+      <label><input type="checkbox" data-layer="minor"> Đường nhỏ</label>
+      <label><input type="checkbox" data-layer="rail"> Đường sắt</label>
+      <label><input type="checkbox" data-layer="water" checked> Mặt nước</label>
+      <label><input type="checkbox" data-layer="faults"> Đứt gãy</label>
+      <button type="button" id="resetCam" style="font:inherit;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer">Đặt lại góc nhìn</button>
+    </div>
+    <div id="map3d"></div>
+    <p class="note" id="mapNote"></p>
+  </div>
+</section>
+
+</main>
+<script>
+const DATA=/*__DATA__*/null;
+const $=s=>document.querySelector(s);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt=(v,d=0)=>v==null||v===''?'–':Number(v).toLocaleString('vi-VN',{maximumFractionDigits:d,minimumFractionDigits:0});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function table(el,rows,cols){
+  const h='<table><thead><tr>'+cols.map(c=>`<th class="${c.num?'num':''}">${esc(c.h)}</th>`).join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr>'+cols.map(c=>{const v=typeof c.k==='function'?c.k(r):r[c.k];return `<td class="${c.num?'num':''}">${c.html?v:(c.num?fmt(v,c.d??1):esc(v))}</td>`}).join('')+'</tr>').join('')+'</tbody></table>';
+  $(el).innerHTML=h;
+}
+function kpis(el,items){
+  $(el).innerHTML=items.map(k=>`<div class="card kpi c3"><div class="v">${k.v}</div><div class="l">${esc(k.l)}</div>${k.d?`<div class="d">${esc(k.d)}</div>`:''}</div>`).join('');
+}
+
+// ---------- Plotly helpers
+function base(extra={}){
+  return Object.assign({
+    paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',
+    font:{family:'system-ui,-apple-system,Segoe UI,Roboto,sans-serif',size:12,color:css('--text-2')},
+    margin:{l:48,r:12,t:8,b:40},
+    xaxis:{gridcolor:css('--grid'),zerolinecolor:css('--border'),linecolor:css('--border'),automargin:true},
+    yaxis:{gridcolor:css('--grid'),zerolinecolor:css('--border'),linecolor:css('--border'),automargin:true},
+    legend:{orientation:'h',y:1.12,x:0,font:{color:css('--text-2')}},
+    hoverlabel:{bgcolor:css('--surface'),bordercolor:css('--border'),font:{color:css('--text')}},
+    bargap:0.25,
+  },extra);
+}
+const CFG={displaylogo:false,responsive:true,modeBarButtonsToRemove:['lasso2d','select2d','autoScale2d']};
+function hbar(el,c,color,opts={}){
+  const n=c.labels.length;
+  Plotly.newPlot(el,[{type:'bar',orientation:'h',y:c.labels.slice().reverse(),x:c.values.slice().reverse(),
+    marker:{color:color||css('--s1'),line:{width:0}},text:c.values.slice().reverse().map(v=>fmt(v,opts.d??0)),textposition:'outside',cliponaxis:false,
+    hovertemplate:'%{y}: %{x}<extra></extra>'}],
+    base({margin:{l:10,r:40,t:4,b:28},xaxis:{gridcolor:css('--grid'),title:opts.xt?{text:opts.xt}:undefined},yaxis:{automargin:true,ticksuffix:' '},height:opts.h||Math.max(160,n*30+50)}),CFG);
+}
+function histo(el,h,color,xt,yt='Số lượng'){
+  const x=h.counts.map((_,i)=>(h.edges[i]+h.edges[i+1])/2), w=h.counts.map((_,i)=>(h.edges[i+1]-h.edges[i])*0.92);
+  const lab=h.counts.map((_,i)=>`${fmt(h.edges[i],2)}–${fmt(h.edges[i+1],2)}`);
+  Plotly.newPlot(el,[{type:'bar',x,y:h.counts,width:w,customdata:lab,marker:{color:color||css('--s1')},hovertemplate:'%{customdata}: %{y}<extra></extra>'}],
+    base({xaxis:{title:{text:xt},gridcolor:css('--grid')},yaxis:{title:{text:yt},gridcolor:css('--grid')}}),CFG);
+}
+
+// ---------- tabs (charts render lazily on first show so Plotly measures real sizes)
+const rendered={};
+const renderers={};
+function show(tab){
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!=='tab-'+tab);
+  if(!rendered[tab]&&renderers[tab]){renderers[tab]();rendered[tab]=true;}
+  else document.querySelectorAll('#tab-'+tab+' .js-plotly-plot').forEach(p=>Plotly.Plots.resize(p));
+  try{history.replaceState(null,'','#'+tab)}catch(e){}
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+
+// ---------- theme toggle
+const modes=['auto','light','dark'];let mode='auto';
+try{mode=localStorage.getItem('yb-theme')||'auto'}catch(e){}
+function applyTheme(){
+  if(mode==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',mode);
+  $('#themeBtn').textContent='Giao diện: '+({auto:'tự động',light:'sáng',dark:'tối'}[mode]);
+}
+$('#themeBtn').onclick=()=>{mode=modes[(modes.indexOf(mode)+1)%3];try{localStorage.setItem('yb-theme',mode)}catch(e){};applyTheme();
+  for(const k in rendered)rendered[k]=false;document.querySelectorAll('.js-plotly-plot').forEach(p=>Plotly.purge(p));
+  show(document.querySelector('#tabs button[aria-selected="true"]').dataset.tab);};
+applyTheme();
+
+const D=DATA, P=D.points, X=D.excel, Y=D.yagi, R=D.rasters;
+
+// ---------- overview
+renderers.overview=()=>{
+  const occ=P.status.values[P.status.labels.indexOf('Đã xảy ra')]||0;
+  kpis('#kpis',[
+    {v:fmt(P.n),l:'Điểm trượt lở / nguy cơ (GPKG)',d:`${occ} đã xảy ra · ${P.n-occ} nguy cơ · ${P.n_cols} trường`},
+    {v:fmt(X.n),l:'Dòng trong tệp Excel',d:`${X.n_exact} trùng toạ độ GPKG · ${X.n-X.n_exact} lệch`},
+    {v:fmt(Y.n),l:'Vết trượt vệ tinh bão Yagi trong phường',d:`Tổng ${fmt(Y.area_total_m2/1e4,1)} ha · ${fmt(Y.n_all)} vết ở lớp đầy đủ`},
+    {v:fmt(D.ward.area_km2,2)+' km²',l:'Diện tích phường Yên Bái',d:`${fmt(D.ward.pop)} dân · ${fmt(D.ward.density)} người/km²`},
+    {v:fmt(D.rain_hourly.n),l:'Bản ghi mưa giờ (6 trạm, 2021–2026)',d:`Max 1h: ${fmt(D.rain_hourly.stations.YBa003.max1h,1)} mm (YBa003, 10/09/2024)`},
+    {v:fmt(D.rain_daily.n),l:'Bản ghi mưa ngày (2 trạm, 2011–2024)',d:`Ngày lớn nhất ${fmt(D.rain_daily.top[0].mm,1)} mm (${D.rain_daily.top[0].station}, ${D.rain_daily.top[0].date})`},
+    {v:fmt(R.dem.ward.min,0)+'–'+fmt(R.dem.ward.max,0)+' m',l:'Cao độ trong phường (DEM 30 m)',d:`Trung vị ${fmt(R.dem.ward.median,1)} m · dốc TB ${fmt(R.slope.ward.mean,1)}°`},
+    {v:fmt(D.osm.buildings_in_ward),l:'Công trình OSM trong phường',d:`${fmt(D.osm.road_km.values.reduce((a,b)=>a+b,0),0)} km đường OSM`},
+  ]);
+  const sc=R.slope_compare, cum=D.rain_cum, ev=cum.events[0];
+  const steep=(a)=>a.slice(2).reduce((x,y)=>x+y,0);
+  const se=P.aspect.labels.indexOf('Đông Nam');
+  $('#findings').innerHTML=[
+    `Bộ điểm GPKG có <b>${P.n}</b> điểm, trong đó chỉ <b>${occ}</b> điểm “Đã xảy ra” có dữ liệu khảo sát (thể tích, mô tả); ${P.n-occ} điểm còn lại là vị trí nguy cơ 2025 với ${P.empty_cols.length} trường hoàn toàn trống.`,
+    `Tệp Excel (${X.n} dòng) <b>chưa khớp hoàn toàn</b> với GPKG: ${X.n_exact} dòng trùng toạ độ (ứng với ${X.n_gpkg_matched} điểm GPKG), ${X.n-X.n_exact} dòng lệch 17–300 m; ${P.n-X.n_gpkg_matched} điểm GPKG không có trong Excel; Excel có ${X.dup_coords} cặp trùng toạ độ.`,
+    `Điểm trượt tập trung ở sườn dốc hơn nền chung: <b>${fmt(steep(sc.points),0)}%</b> điểm có độ dốc ≥ 10°, so với ${fmt(steep(sc.ward),0)}% diện tích phường; ${fmt(steep(sc.yagi),0)}% vết Yagi ở độ dốc ≥ 10°.`,
+    `Hướng Đông Nam chiếm ${fmt(R.aspect_compare.points[3],0)}% điểm trượt, gần gấp đôi tỉ lệ ${fmt(R.aspect_compare.ward[3],0)}% của toàn phường.`,
+    `${fmt(P.rock.values[0])}/${P.n} điểm nằm trên <b>${esc(P.rock.labels[0])}</b> (loạt Sông Hồng), dù nhóm này chỉ chiếm khoảng một nửa diện tích phường.`,
+    `Bão Yagi: tích luỹ 3 ngày đạt <b>${fmt(ev.mm3d,1)} mm</b> (${ev.date}), gấp ${fmt(ev.mm3d/cum.events[1].mm3d,1)} lần đợt lớn thứ hai; toàn bộ ${Y.n} vết trượt vệ tinh trong phường được gán ngày phát sinh ${Y.date.labels[0]}.`,
+    `Dữ liệu mưa giờ không đồng đều: YBa003 từ 05/2021, 3 trạm YBa từ 11/2022, 2 trạm LCa chỉ từ 11/2025; trạm YBa003 thiếu ${fmt(D.rain_hourly.stations.YBa003.expected-D.rain_hourly.stations.YBa003.n)} giờ.`,
+  ].map(s=>`<li>${s}</li>`).join('');
+  const w=D.ward;
+  table('#wardTbl',[
+    ['Tên',w.name],['Tỉnh',w.province],['Sáp nhập từ',w.merged],['Diện tích khai báo',fmt(w.area_km2,2)+' km²'],
+    ['Diện tích tính từ hình học (UTM 48N)',fmt(w.area_calc_km2,2)+' km²'],['Dân số',fmt(w.pop)],['Mật độ',fmt(w.density,1)+' người/km²']
+  ].map(([a,b])=>({a,b})),[{h:'Thuộc tính',k:'a'},{h:'Giá trị',k:'b'}]);
+  table('#invTbl',D.inventory,[{h:'Tệp',k:'path'},{h:'KB',k:'size_kb',num:true,d:1},{h:'Nội dung',k:'detail'}]);
+};
+
+// ---------- points
+renderers.points=()=>{
+  const sc=P.status, stColor=l=>l==='Đã xảy ra'?css('--critical'):css('--serious');
+  Plotly.newPlot('cStatus',[{type:'bar',x:sc.labels,y:sc.values,marker:{color:sc.labels.map(stColor)},text:sc.values,textposition:'outside',cliponaxis:false,hovertemplate:'%{x}: %{y}<extra></extra>'}],
+    base({yaxis:{gridcolor:css('--grid'),title:{text:'Số điểm'}}}),CFG);
+  hbar('cXa',P.xa_cu,css('--s1'));
+  const cmp=R.slope_compare;
+  Plotly.newPlot('cSlopeCmp',[
+    {type:'bar',name:'Toàn phường (ô DEM)',x:cmp.bins,y:cmp.ward,marker:{color:css('--s1')},hovertemplate:'Phường %{x}: %{y}%<extra></extra>'},
+    {type:'bar',name:'Điểm trượt GPKG',x:cmp.bins,y:cmp.points,marker:{color:css('--s2')},hovertemplate:'Điểm trượt %{x}: %{y}%<extra></extra>'},
+    {type:'bar',name:'Vết Yagi',x:cmp.bins,y:cmp.yagi,marker:{color:css('--s3')},hovertemplate:'Vết Yagi %{x}: %{y}%<extra></extra>'}],
+    base({barmode:'group',bargroupgap:0.08,yaxis:{ticksuffix:'%',gridcolor:css('--grid')}}),CFG);
+  const ac=R.aspect_compare;
+  Plotly.newPlot('cAspect',[
+    {type:'bar',name:'Toàn phường (ô DEM)',x:ac.labels,y:ac.ward,marker:{color:css('--s1')},hovertemplate:'Phường %{x}: %{y}%<extra></extra>'},
+    {type:'bar',name:'Điểm trượt GPKG',x:ac.labels,y:ac.points,marker:{color:css('--s2')},hovertemplate:'Điểm trượt %{x}: %{y}%<extra></extra>'}],
+    base({barmode:'group',bargroupgap:0.08,yaxis:{ticksuffix:'%',gridcolor:css('--grid')}}),CFG);
+  const sel=$('#numSel');sel.innerHTML=Object.entries(P.numeric).map(([k,v])=>`<option value="${k}">${esc(v.label)}</option>`).join('');
+  const drawNum=()=>{const v=P.numeric[sel.value];histo('cNum',v.hist,css('--s1'),v.label,'Số điểm');
+    $('#numStats').textContent=`n=${v.stats.n} · min ${fmt(v.stats.min,2)} · trung vị ${fmt(v.stats.median,2)} · TB ${fmt(v.stats.mean,2)} · max ${fmt(v.stats.max,2)}`};
+  sel.onchange=drawNum;drawNum();
+  hbar('cRock',P.rock,css('--s1'));
+  hbar('cRoad',P.road_class,css('--s1'));
+  table('#occTbl',P.occurred,[{h:'Mã',k:'ma_vi_tri'},{h:'Tên điểm',k:'ten_diem'},{h:'Phường cũ',k:'xa_cu'},{h:'Thể tích (m³)',k:'the_tich_m3',num:true,d:0},
+    {h:'Cao độ (m)',k:'cao_do_m',num:true},{h:'Độ dốc (°)',k:'do_doc_do',num:true},{h:'Mô tả',k:'mo_ta'}]);
+  table('#ptTbl',P.table,[{h:'Mã',k:'ma_vi_tri'},{h:'Tên',k:'ten_diem'},{h:'Phường cũ',k:'xa_cu'},{h:'Trạng thái',k:'trang_thai'},{h:'Tin cậy',k:'do_tin_cay_vi_tri'},
+    {h:'Cao độ',k:'cao_do_m',num:true},{h:'Dốc °',k:'do_doc_do',num:true},{h:'Hướng',k:'huong_doc_8'},{h:'Nhóm đá',k:'dc_nhom_da'},
+    {h:'K/c đường (m)',k:'kc_duong_m',num:true},{h:'Nhà 100 m',k:'so_nha_100m',num:true,d:0},{h:'Kinh độ',k:'lon_wgs84',num:true,d:5},{h:'Vĩ độ',k:'lat_wgs84',num:true,d:5}]);
+};
+
+// ---------- excel
+renderers.excel=()=>{
+  kpis('#xlKpis',[
+    {v:X.n,l:'Dòng Excel',d:`${X.n_cols} cột · ${X.in_ward} dòng nằm trong ranh giới`},
+    {v:X.n_exact,l:'Trùng toạ độ GPKG (< 1 m)',d:`Ứng với ${X.n_gpkg_matched} điểm GPKG khác nhau`},
+    {v:X.n-X.n_exact,l:'Dòng Excel lệch toạ độ',d:'Không có điểm GPKG trong bán kính 1 m'},
+    {v:P.n-X.n_gpkg_matched,l:'Điểm GPKG không có trong Excel',d:`Excel có ${X.dup_coords} cặp trùng toạ độ`},
+  ]);
+  const h=X.dist_hist, lab=['< 1','1–10','10–50','50–100','100–200','200–300'];
+  Plotly.newPlot('cDist',[{type:'bar',x:lab,y:h.counts,marker:{color:lab.map((_,i)=>i===0?css('--s1'):css('--s2'))},text:h.counts,textposition:'outside',cliponaxis:false,hovertemplate:'%{x} m: %{y} dòng<extra></extra>'}],
+    base({xaxis:{title:{text:'Khoảng cách (m)'},type:'category'},yaxis:{title:{text:'Số dòng Excel'},gridcolor:css('--grid')}}),CFG);
+  hbar('cXlXa',X.xa_cu,css('--s1'));
+  table('#xlUn',X.excel_unmatched,[{h:'id_diem_truot',k:'id_diem_truot'},{h:'Tên',k:'ten_diem_truot'},{h:'Phường cũ',k:'Ten_Xa_cu'},
+    {h:'K/c (m)',k:'kc_m',num:true,d:0},{h:'GPKG gần nhất',k:'gpkg_gan_nhat'}]);
+  table('#gpUn',X.gpkg_unmatched,[{h:'Mã',k:'ma_vi_tri'},{h:'Tên',k:'ten_diem'},{h:'Phường cũ',k:'xa_cu'},{h:'Trạng thái',k:'trang_thai'},{h:'Nguồn',k:'nguon'}]);
+  $('#xlCols').innerHTML=X.cols.map(c=>`<code>${esc(c)}</code>`).join(' ');
+};
+
+// ---------- yagi
+renderers.yagi=()=>{
+  kpis('#yKpis',[
+    {v:Y.n,l:'Vết trượt trong phường',d:`${fmt(Y.n_all)} vết trong lớp đầy đủ (5 phường)`},
+    {v:fmt(Y.area_total_m2/1e4,1)+' ha',l:'Tổng diện tích trong phường',d:`Trung vị ${fmt(Y.area_stats.median)} m² · lớn nhất ${fmt(Y.area_stats.max)} m²`},
+    {v:Y.date.labels[0],l:'Ngày phát sinh (mọi vết)',d:`Đợt ảnh ${Y.dot.labels.join(', ')}`},
+    {v:Y.conf.values[Y.conf.labels.indexOf('cao')]||0,l:'Vết tin cậy “cao”',d:`${Y.conf.values[Y.conf.labels.indexOf('trung bình')]||0} vết “trung bình”`},
+  ]);
+  const a=Y.area, lab=a.counts.map((_,i)=>i===a.counts.length-1?`≥ ${fmt(a.edges[i])}`:`${fmt(a.edges[i])}–${fmt(a.edges[i+1])}`);
+  Plotly.newPlot('cYArea',[{type:'bar',x:lab,y:a.counts,marker:{color:css('--s3')},text:a.counts,textposition:'outside',cliponaxis:false,hovertemplate:'%{x} m²: %{y} vết<extra></extra>'}],
+    base({xaxis:{type:'category',title:{text:'Diện tích (m²)'}},yaxis:{title:{text:'Số vết'},gridcolor:css('--grid')}}),CFG);
+  histo('cYSlope',Y.slope,css('--s3'),'Độ dốc TB (°)','Số vết');
+  hbar('cYConf',Y.conf,css('--s3'));
+  hbar('cYRain',Y.rain24,css('--s3'));
+  hbar('cYXa',Y.xa,css('--s3'));
+  $('#yCols').innerHTML=Y.cols.map(c=>`<code>${esc(c)}</code>`).join(' ');
+};
+
+// ---------- rain
+renderers.rain=()=>{
+  const c=D.rain_cum.daily;
+  Plotly.newPlot('cCum',[
+    {type:'scatter',mode:'lines',name:'7 ngày',x:c.d,y:c.d7,line:{color:css('--s1'),width:1.5},hovertemplate:'%{x}: %{y} mm<extra>7 ngày</extra>'},
+    {type:'scatter',mode:'lines',name:'3 ngày',x:c.d,y:c.d3,line:{color:css('--s2'),width:1.5},hovertemplate:'%{x}: %{y} mm<extra>3 ngày</extra>'},
+    {type:'scatter',mode:'lines',name:'1 ngày',x:c.d,y:c.d1,line:{color:css('--s3'),width:1.5},hovertemplate:'%{x}: %{y} mm<extra>1 ngày</extra>'}],
+    base({hovermode:'x unified',yaxis:{title:{text:'mm'},gridcolor:css('--grid')},xaxis:{gridcolor:css('--grid'),rangeslider:{visible:true,thickness:0.06}},
+      annotations:[{x:'2024-09-10',y:D.rain_cum.events[0].mm7d,text:'Bão Yagi',showarrow:true,arrowhead:0,ax:40,ay:-10,font:{color:css('--text')}}]}),CFG);
+  const yr=D.rain_hourly.yagi, cols=[css('--s1'),css('--s2'),css('--s3'),css('--s4')];
+  Plotly.newPlot('cYagiRain',Object.entries(yr).map(([s,v],i)=>({type:'scatter',mode:'lines+markers',name:s,x:v.days,y:v.mm,line:{color:cols[i],width:2},marker:{size:8,line:{color:css('--surface'),width:2}},hovertemplate:'%{x}: %{y} mm<extra>'+s+'</extra>'})),
+    base({hovermode:'x unified',yaxis:{title:{text:'mm/ngày'},gridcolor:css('--grid')}}),CFG);
+  table('#evTbl',D.rain_cum.events,[{h:'Ngày đỉnh',k:'date'},{h:'1 ngày',k:'mm1d',num:true},{h:'3 ngày',k:'mm3d',num:true},{h:'7 ngày',k:'mm7d',num:true}]);
+  const st=D.rain_daily.stations;
+  Plotly.newPlot('cAnn',Object.entries(st).map(([s,v],i)=>({type:'scatter',mode:'lines+markers',name:s,x:v.years,y:v.tot,customdata:v.days,line:{color:cols[i],width:2},marker:{size:8,line:{color:css('--surface'),width:2}},hovertemplate:'%{x}: %{y} mm (%{customdata} ngày có số liệu)<extra>'+s+'</extra>'})),
+    base({hovermode:'x unified',yaxis:{title:{text:'mm/năm'},gridcolor:css('--grid')},xaxis:{dtick:1,gridcolor:css('--grid')}}),CFG);
+  const m=D.rain_daily.monthly, ml=['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+  Plotly.newPlot('cMon',Object.entries(m).map(([s,v],i)=>({type:'bar',name:s,x:ml,y:v,marker:{color:cols[i]},hovertemplate:'%{x}: %{y} mm<extra>'+s+'</extra>'})),
+    base({barmode:'group',bargroupgap:0.08,yaxis:{title:{text:'mm/tháng'},gridcolor:css('--grid')}}),CFG);
+  const rows=Object.entries(D.rain_hourly.stations).map(([s,v])=>({s,type:'Giờ',start:v.start,end:v.end,n:v.n,miss:v.expected-v.n,tot:v.total,mx:v.max1h,at:v.max1h_at}))
+    .concat(Object.entries(D.rain_daily.coverage).map(([s,v])=>({s,type:'Ngày',start:v.start,end:v.end,n:v.n,miss:v.expected-v.n,tot:st[s].tot.reduce((a,b)=>a+b,0),mx:null,at:''})));
+  table('#stTbl',rows,[{h:'Trạm',k:'s'},{h:'Loại',k:'type'},{h:'Bắt đầu',k:'start'},{h:'Kết thúc',k:'end'},{h:'Bản ghi',k:'n',num:true,d:0},
+    {h:'Thiếu (giờ/ngày)',k:'miss',num:true,d:0},{h:'Tổng mưa (mm)',k:'tot',num:true,d:0},{h:'Max 1h (mm)',k:'mx',num:true},{h:'Lúc',k:'at'}]);
+};
+
+// ---------- terrain
+renderers.terrain=()=>{
+  const rows=['dem','slope','relief'].flatMap(k=>['ward','all'].map(s=>Object.assign({layer:s==='ward'?R[k].label:'',scope:s==='ward'?'Phường':'Toàn ảnh'},R[k][s])));
+  table('#rTbl',rows,[{h:'Lớp',k:'layer'},{h:'Phạm vi',k:'scope'},{h:'Số ô',k:'n',num:true,d:0},{h:'Min',k:'min',num:true},{h:'TB',k:'mean',num:true},{h:'Trung vị',k:'median',num:true},{h:'P95',k:'p95',num:true},{h:'Max',k:'max',num:true}]);
+  histo('cDem',R.dem.hist_ward,css('--s1'),'Cao độ (m)','Số ô');
+  hbar('cGeo',D.geology.rock_area,css('--s1'),{d:2});
+  const rk={labels:D.osm.road_km.labels.slice(0,10),values:D.osm.road_km.values.slice(0,10)};
+  hbar('cRoadKm',rk,css('--s1'),{d:1});
+  table('#osmTbl',Object.entries(D.osm.layers).map(([k,v])=>({k,v})),[{h:'Lớp',k:'k'},{h:'Số đối tượng',k:'v',num:true,d:0}]);
+};
+
+// ---------- quality
+renderers.quality=()=>{
+  const xlv=X.xa_cu.labels.length, ptv=P.xa_cu_raw.labels.length;
+  const q=[
+    ['hi','Đối chiếu','Excel và GPKG không khớp 1–1',`${X.n_exact}/${X.n} dòng Excel trùng toạ độ; ${X.n-X.n_exact} dòng lệch 17–300 m; ${P.n-X.n_gpkg_matched} điểm GPKG không có trong Excel. Excel không có khoá chung (id_diem_truot ≠ ma_vi_tri).`,'Lập bảng nối thủ công theo tên tổ + khoảng cách; xác nhận với nguồn.'],
+    ['hi','Đầy đủ',`${P.empty_cols.length} trường GPKG trống hoàn toàn`,P.empty_cols.map(c=>`<code>${esc(c)}</code>`).join(' '),'Loại khỏi mô hình hoặc bổ sung từ khảo sát.'],
+    ['md','Đầy đủ','Trường thưa (< 50% có giá trị)',P.sparse_cols.map(([c,v])=>`<code>${esc(c)}</code> ${v}%`).join(', '),'Thông tin khảo sát chỉ có ở 7 điểm “Đã xảy ra”; thông tin tuyến đường chỉ có ở 36 điểm gần QL.37/ĐT.163.'],
+    ['md','Nhất quán','Tên phường cũ ghi không thống nhất',`GPKG: ${ptv} cách ghi; Excel: ${xlv} cách ghi (ví dụ “P. Đồng Tâm” / “Đồng Tâm”, “P.Yên Ninh”). <code>huyen_cu</code> có “TP Yên\\nBái” chứa ký tự xuống dòng; <code>tinh_cu</code> lẫn “Yên Bái” và “Lào Cai”.`,'Chuẩn hoá danh mục đơn vị hành chính cũ.'],
+    ['md','Mã hoá','Ký hiệu tuổi địa chất bị lỗi font',`<code>dc_tuoi_ky_hieu</code> / <code>tuoi_ky_hieu</code> chứa ký tự như “PPÈÐ¤”, “aQ£…” (font TCVN3/.VnTime cũ).`,'Chuyển mã hoặc dùng trường mô tả.'],
+    ['md','Trùng lặp',`Excel có ${X.dup_coords} cặp toạ độ trùng`,X.dup_coord_rows.map(r=>`id ${r.id_diem_truot} (${esc(r.ten_diem_truot)})`).join(', '),'Kiểm tra xem là một vị trí hay lỗi nhập.'],
+    ['md','Độ phủ thời gian','Mưa giờ không đồng bộ giữa các trạm',`YBa003 từ 31/05/2021 (thiếu ${fmt(D.rain_hourly.stations.YBa003.expected-D.rain_hourly.stations.YBa003.n)} giờ); YBa036/067/084 từ 21/11/2022; LCa500/503 chỉ từ 27/11/2025. Cột <code>tre</code> > 1 ở ${fmt(Object.values(D.rain_hourly.stations).reduce((a,s)=>a+s.tre_gt1,0))} bản ghi (gộp nhiều giờ).`,'Khi so sánh trạm, chỉ dùng giai đoạn chung.'],
+    ['md','Độ phủ thời gian','Mưa ngày thiếu ngày',Object.entries(D.rain_daily.coverage).map(([s,v])=>`${s}: thiếu ${v.expected-v.n} ngày trong ${v.start} → ${v.end}`).join('; ')+'. Nguồn đổi từ PCTT_2011_2020 sang nguồn khác sau 2020.','Kiểm tra năm có ít ngày số liệu trước khi so sánh tổng năm.'],
+    ['lo','Độ phủ','Bảng mưa tích luỹ có giá trị trống ở đầu chuỗi và các khoảng mất số liệu',Object.entries(D.rain_cum.na).map(([k,v])=>`${k}: ${fmt(v)}`).join(' · ')+` (trên ${fmt(D.rain_cum.n)} giờ). Bảng không ghi trạm nguồn; đỉnh trùng trạm YBa084 (417,6 mm/24h).`,'Ghi rõ trạm/phương pháp tính.'],
+    ['lo','Không gian','DEM rộng hơn ranh giới phường',`${fmt(R.meta.cells_valid)} ô hợp lệ, chỉ ${fmt(R.meta.cells_ward)} ô nằm trong phường; thống kê cần cắt theo ranh giới.`,'Đã cắt khi tính thống kê trong dashboard.'],
+    ['lo','Không gian','Hai bản DEM khác hệ toạ độ',`DEM_30m_..._WGS84 (496×359, ~18 m) và bản UTM48N (289×224, 30 m) có cao độ cực đại khác nhau (156 m và 154,5 m) do lấy mẫu lại.`,'Dùng bản UTM cho phân tích độ dốc.'],
+    ['lo','Chồng lấp','Vết Yagi có hai bản',`${Y.n} vết trong <code>vet_truot_ve_tinh_Yagi_trong_phuong.gpkg</code> là tập con của ${fmt(Y.n_all)} vết ở lớp <code>vet_truot_ve_tinh_Yagi</code> trong nen_phuong_Yen_Bai.gpkg.`,'Dùng một nguồn duy nhất.'],
+    ['lo','Ngữ nghĩa','Trường hằng số',`<code>con_nguy_co</code>=True, <code>loai_diem</code>=“Không rõ”, <code>loai_nguy_co</code>=“Trượt lở”, <code>gia_toc_nen_g</code>=0,14, <code>so_tram_noi_suy</code>=8 cho mọi điểm.`,'Không mang thông tin phân biệt.'],
+  ];
+  const lvl={hi:'Cao',md:'Trung bình',lo:'Thấp'};
+  table('#qTbl',q.map(([l,c,t,d,a])=>({l,c,t,d,a})),[{h:'Mức',k:r=>`<span class="tag ${r.l}">${lvl[r.l]}</span>`,html:true},{h:'Nhóm',k:'c'},{h:'Vấn đề',k:'t'},{h:'Chi tiết',k:'d',html:true},{h:'Đề xuất',k:'a'}]);
+};
+
+// ---------- 3D GIS
+renderers.geo3d=()=>{
+  const S=D.scene, el='map3d';
+  const lineTrace=(L,name,color,width,key,vis)=>({type:'scatter3d',mode:'lines',name,x:L.x,y:L.y,z:L.z,line:{color,width},hoverinfo:'skip',meta:key,visible:vis,connectgaps:false});
+  const elevScale=[[0,'#e9f0e4'],[0.25,'#b9d3a8'],[0.5,'#8db27a'],[0.75,'#a8865e'],[1,'#6e5137']];
+  const slopeScale=[[0,'#f3f1ea'],[0.2,'#f6d58a'],[0.45,'#ec9a4f'],[0.7,'#d0503b'],[1,'#7a1f1f']];
+  const ptsIdx=S.points.status.map((s,i)=>i);
+  const grp=s=>ptsIdx.filter(i=>S.points.status[i]===s);
+  const ptTrace=(s,color,size,sym)=>{const ix=grp(s);return {type:'scatter3d',mode:'markers',name:`${s} (${ix.length})`,meta:'pts',
+    x:ix.map(i=>S.points.x[i]),y:ix.map(i=>S.points.y[i]),z:ix.map(i=>S.points.z[i]+6),text:ix.map(i=>S.points.text[i]),
+    marker:{size,color,symbol:sym,line:{color:'#ffffff',width:1.5}},hovertemplate:'%{text}<extra></extra>'}};
+  const exIdx=S.excel.matched.map((m,i)=>m?-1:i).filter(i=>i>=0);
+  const traces=[
+    {type:'surface',name:'Địa hình',x:S.x,y:S.y,z:S.z,surfacecolor:S.z,colorscale:elevScale,cmin:S.zrange[0],cmax:S.zrange[1],
+      colorbar:{title:{text:'Cao độ (m)',side:'right'},thickness:12,len:0.55,x:1.0,tickfont:{color:css('--text-2')},titlefont:{color:css('--text-2')}},
+      lighting:{ambient:0.55,diffuse:0.8,specular:0.05,roughness:0.9},lightposition:{x:-1e5,y:1e5,z:2e5},
+      contours:{z:{show:false}},hovertemplate:'x %{x:.2f} km, y %{y:.2f} km<br>Cao độ %{z:.1f} m<extra></extra>',showscale:true,meta:'surface'},
+    lineTrace(S.water,'Mặt nước',css('--s1'),3,'water',true),
+    lineTrace(S.roads_minor,'Đường nhỏ','#9a9890',1.5,'minor',false),
+    lineTrace(S.roads_main,'Đường chính','#3a3a38',3,'roads',true),
+    lineTrace(S.rail,'Đường sắt','#6a4c93',4,'rail',false),
+    lineTrace(S.faults,'Đứt gãy',css('--s4'),5,'faults',false),
+    lineTrace(S.ward,'Ranh giới phường','#111111',6,'ward',true),
+    lineTrace(S.yagi,'Vết Yagi (viền)',css('--s3'),3,'yagi',true),
+    {type:'scatter3d',mode:'markers',name:`Vết Yagi (${S.yagi_pts.x.length})`,meta:'yagi',x:S.yagi_pts.x,y:S.yagi_pts.y,z:S.yagi_pts.z,text:S.yagi_pts.text,
+      marker:{size:S.yagi_pts.area.map(a=>Math.max(3,Math.min(9,Math.sqrt(a)/6))),color:css('--s3'),opacity:0.85},hovertemplate:'%{text}<extra></extra>'},
+    ptTrace('Nguy cơ',css('--serious'),6,'circle'),
+    ptTrace('Đã xảy ra',css('--critical'),9,'diamond'),
+    {type:'scatter3d',mode:'markers',name:`Excel lệch toạ độ (${exIdx.length})`,meta:'excel',visible:false,
+      x:exIdx.map(i=>S.excel.x[i]),y:exIdx.map(i=>S.excel.y[i]),z:exIdx.map(i=>S.excel.z[i]+6),text:exIdx.map(i=>S.excel.text[i]),
+      marker:{size:6,color:css('--s1'),symbol:'square',line:{color:'#ffffff',width:1.5}},hovertemplate:'%{text}<extra></extra>'},
+  ];
+  const ex=+$('#exag').value;
+  const aspect=e=>({x:S.extent_km[0]/S.extent_km[1],y:1,z:(S.zrange[1]-S.zrange[0])/1000*e/S.extent_km[1]});
+  const cam={eye:{x:-0.55,y:-0.95,z:0.55},center:{x:0,y:0,z:-0.15}};
+  const ax=t=>({title:{text:t},gridcolor:css('--grid'),backgroundcolor:'rgba(0,0,0,0)',showbackground:false,color:css('--text-2'),zerolinecolor:css('--border')});
+  Plotly.newPlot(el,traces,base({margin:{l:0,r:0,t:0,b:0},legend:{orientation:'v',x:0,y:1,bgcolor:css('--surface'),bordercolor:css('--border'),borderwidth:1,font:{color:css('--text-2')}},
+    scene:{aspectmode:'manual',aspectratio:aspect(ex),camera:cam,xaxis:ax('Đông (km)'),yaxis:ax('Bắc (km)'),zaxis:Object.assign(ax('Cao độ (m)'),{})},uirevision:'keep'}),
+    Object.assign({},CFG,{scrollZoom:true}));
+  $('#exag').oninput=e=>{$('#exagV').textContent=e.target.value+'×';Plotly.relayout(el,{'scene.aspectratio':aspect(+e.target.value)})};
+  $('#colorBy').onchange=e=>{const s=e.target.value==='slope';
+    Plotly.restyle(el,{surfacecolor:[s?S.slope:S.z],colorscale:[s?slopeScale:elevScale],cmin:[s?0:S.zrange[0]],cmax:[s?30:S.zrange[1]],
+      'colorbar.title.text':[s?'Độ dốc (°)':'Cao độ (m)']},[0])};
+  document.querySelectorAll('[data-layer]').forEach(cb=>cb.onchange=()=>{
+    const key=cb.dataset.layer, idx=traces.map((t,i)=>t.meta===key?i:-1).filter(i=>i>=0);
+    Plotly.restyle(el,{visible:cb.checked},idx)});
+  $('#resetCam').onclick=()=>Plotly.relayout(el,{'scene.camera':cam});
+  $('#mapNote').innerHTML=`DEM 30 m (${R.meta.w}×${R.meta.h} ô, UTM 48N); gốc toạ độ (0,0) tại E ${fmt(S.origin[0])} / N ${fmt(S.origin[1])} m. `+
+    `Các lớp vector được phủ lên bề mặt bằng nội suy song tuyến cao độ DEM. Kéo để xoay, cuộn để thu phóng, rê chuột lên điểm để xem thuộc tính; bấm vào chú giải để ẩn/hiện từng lớp.`;
+};
+
+const start=(location.hash||'#overview').slice(1);
+show(renderers[start]?start:'overview');
+</script>
+</body>
+</html>
