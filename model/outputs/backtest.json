@@ -1,0 +1,105 @@
+{
+ "tu": "2021-06-01 00:00",
+ "den": "2026-11-13 10:00",
+ "so_gio": {
+  "Thấp": {
+   "xám": 6460,
+   "xanh": 41326,
+   "vàng": 9,
+   "cam": 0,
+   "đỏ": 0
+  },
+  "Trung bình": {
+   "xám": 6460,
+   "xanh": 41271,
+   "vàng": 55,
+   "cam": 9,
+   "đỏ": 0
+  },
+  "Cao": {
+   "xám": 6460,
+   "xanh": 40517,
+   "vàng": 754,
+   "cam": 55,
+   "đỏ": 9
+  },
+  "Rất cao": {
+   "xám": 6460,
+   "xanh": 40517,
+   "vàng": 754,
+   "cam": 55,
+   "đỏ": 9
+  }
+ },
+ "so_ngay_co_mau": {
+  "Thấp": {
+   "xám": 213,
+   "xanh": 1778,
+   "vàng": 1,
+   "cam": 0,
+   "đỏ": 0
+  },
+  "Trung bình": {
+   "xám": 213,
+   "xanh": 1774,
+   "vàng": 4,
+   "cam": 1,
+   "đỏ": 0
+  },
+  "Cao": {
+   "xám": 213,
+   "xanh": 1718,
+   "vàng": 56,
+   "cam": 4,
+   "đỏ": 1
+  },
+  "Rất cao": {
+   "xám": 213,
+   "xanh": 1718,
+   "vàng": 56,
+   "cam": 4,
+   "đỏ": 1
+  }
+ },
+ "dot_do": {
+  "Thấp": [],
+  "Trung bình": [],
+  "Cao": [
+   {
+    "bat_dau": "2024-09-10 08:00",
+    "ket_thuc": "2024-09-10 16:00",
+    "so_gio": 9,
+    "mua_72h_max": 544.6
+   }
+  ],
+  "Rất cao": [
+   {
+    "bat_dau": "2024-09-10 08:00",
+    "ket_thuc": "2024-09-10 16:00",
+    "so_gio": 9,
+    "mua_72h_max": 544.6
+   }
+  ]
+ },
+ "yagi": {
+  "Thấp": "vàng",
+  "Trung bình": "cam",
+  "Cao": "đỏ",
+  "Rất cao": "đỏ"
+ },
+ "dot_2025_10_01": {
+  "Thấp": "xanh",
+  "Trung bình": "vàng",
+  "Cao": "cam",
+  "Rất cao": "cam"
+ },
+ "gio_thieu_so_lieu": 6460,
+ "so_co_theo_cap": {
+  "Thấp": 18,
+  "Trung bình": 30,
+  "Cao": 20,
+  "Rất cao": 19
+ },
+ "dinh_nghia": "so_ngay_co_mau: mỗi ngày tính theo màu cao nhất trong ngày; xám = cả ngày thiếu số liệu mưa.",
+ "ghi_chu": "Thử nghiệm – ngưỡng nháp, cần cơ quan chuyên môn xác nhận"
+}
