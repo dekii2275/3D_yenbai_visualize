@@ -52,4 +52,4 @@ python scripts/build_dashboard.py  # cập nhật tab "Mô hình dự báo"
 
 Đầu ra trong `model/outputs/`: `susceptibility_prob.tif`, `susceptibility_class.tif`, `flags.csv`/`flags.json` (87 điểm cờ và cấp), `metrics.json`, `thresholds.json`, `backtest.json`. Cần thêm scikit-learn, scipy, pytest.
 
-Giới hạn: mọi nhãn đến từ một trận bão (Yagi, 09/2024); ngưỡng R3 gần bằng đỉnh Yagi; 87 điểm cờ không độc lập với vết Yagi; một chuỗi mưa chung cho cả phường. Thiết kế: `docs/superpowers/specs/2026-11-23-mo-hinh-du-bao-sat-lo-design.md`.
+Giới hạn: mọi nhãn đến từ một trận bão (Yagi, 09/2024); ngưỡng R3 được neo theo lượng mưa Yagi đến hết 09/09/2024 (một sự kiện); vết trượt vệ tinh chỉ có ở đất dốc ≥ 5° nên AUC trên toàn vùng (0,755) cao hơn AUC chỉ trên đất dốc (0,653); 87 điểm cờ không độc lập với vết Yagi; một chuỗi mưa chung cho cả phường. Thiết kế: `docs/superpowers/specs/2026-11-23-mo-hinh-du-bao-sat-lo-design.md`.
